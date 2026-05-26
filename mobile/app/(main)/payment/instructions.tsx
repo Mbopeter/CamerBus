@@ -18,7 +18,9 @@ export default function PaymentInstructionsScreen() {
   const pricePerSeat = selectedSchedule
     ? Number(selectedSchedule.bus_type === 'VIP' ? selectedSchedule.price_vip : selectedSchedule.price_standard)
     : 0;
-  const total = pricePerSeat * selectedSeats.length;
+  const ticketTotal   = pricePerSeat * selectedSeats.length;
+  const PLATFORM_FEE  = 200;
+  const total         = ticketTotal + PLATFORM_FEE;
 
   const getPaymentDetails = () => {
     if (paymentMethod === 'mtn_momo')     return { name: selectedSchedule?.mtn_name,    number: selectedSchedule?.mtn_number };
@@ -50,6 +52,25 @@ export default function PaymentInstructionsScreen() {
             <Text style={styles.amount}>{total.toLocaleString()} XAF</Text>
             <Text style={styles.amountSub}>{selectedSeats.length} seat(s) × {pricePerSeat.toLocaleString()} XAF</Text>
           </LinearGradient>
+          {/* Platform fee breakdown */}
+          <View style={styles.feeBreakdown}>
+            <View style={styles.feeRow}>
+              <Text style={styles.feeLabel}>🎫 Ticket price ({selectedSeats.length} seat{selectedSeats.length !== 1 ? 's' : ''})</Text>
+              <Text style={styles.feeValue}>{ticketTotal.toLocaleString()} XAF</Text>
+            </View>
+            <View style={[styles.feeRow, styles.platformFeeRow]}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.platformFeeLabel}>⚡ Platform charge</Text>
+                <Text style={styles.platformFeeNote}>Secure booking & processing fee</Text>
+              </View>
+              <Text style={styles.platformFeeAmount}>+ {PLATFORM_FEE.toLocaleString()} XAF</Text>
+            </View>
+            <View style={styles.feeDivider} />
+            <View style={styles.feeRow}>
+              <Text style={styles.feeTotalLabel}>💳 Total to transfer</Text>
+              <Text style={styles.feeTotalValue}>{total.toLocaleString()} XAF</Text>
+            </View>
+          </View>
         </View>
 
         {/* Pay to */}
@@ -96,7 +117,7 @@ export default function PaymentInstructionsScreen() {
           <Text style={styles.stepsTitle}>📋 How to Pay</Text>
           {[
             `Open your ${method.nameShort} app`,
-            `Send exactly ${total.toLocaleString()} XAF to ${details.number}`,
+            `Send exactly ${total.toLocaleString()} XAF to ${details.number} (includes 200 XAF platform charge)`,
             'Take a screenshot of the successful transfer',
             'Come back here and upload your screenshot',
             'Wait for admin approval (usually within 30 mins)',
@@ -140,6 +161,17 @@ const getStyles = (theme: any) => StyleSheet.create({
   amountLabel:     { fontSize: 13, color: 'rgba(255,255,255,0.8)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 },
   amount:          { fontSize: 42, fontWeight: '900', color: '#fff', marginVertical: 8 },
   amountSub:       { fontSize: 13, color: 'rgba(255,255,255,0.75)' },
+  feeBreakdown:    { backgroundColor: '#F0FFF4', borderBottomLeftRadius: 20, borderBottomRightRadius: 20, padding: 16, gap: 0 },
+  feeRow:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
+  feeLabel:        { fontSize: 13, color: '#444', fontWeight: '500' },
+  feeValue:        { fontSize: 13, color: '#333', fontWeight: '700' },
+  platformFeeRow:  { backgroundColor: '#FFF3CD', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 10, marginVertical: 4 },
+  platformFeeLabel:{ fontSize: 13, color: '#856404', fontWeight: '800' },
+  platformFeeNote: { fontSize: 11, color: '#856404', opacity: 0.8, marginTop: 2 },
+  platformFeeAmount:{ fontSize: 15, fontWeight: '900', color: '#856404' },
+  feeDivider:      { height: 1, backgroundColor: '#C3E6CB', marginVertical: 4 },
+  feeTotalLabel:   { fontSize: 14, fontWeight: '800', color: '#007A33' },
+  feeTotalValue:   { fontSize: 16, fontWeight: '900', color: '#007A33' },
   payCard:         { backgroundColor: theme.card, borderRadius: 20, padding: 20, shadowColor:'#000', shadowOffset:{width:0,height:4}, shadowOpacity:0.07, shadowRadius:12, elevation:4 },
   payCardTitle:    { fontSize: 16, fontWeight: '800', color: theme.text, marginBottom: 16 },
   payDetail:       { borderBottomWidth: 1, borderBottomColor: theme.border, paddingVertical: 12 },

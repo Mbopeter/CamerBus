@@ -36,10 +36,35 @@ export default function HomeScreen() {
   const [fromBranch, setFromBranch] = useState<any>(null);
   const [toBranch,   setToBranch]   = useState<any>(null);
 
-  const [date,     setDate]      = useState(new Date().toISOString().split('T')[0]);
-  const [showFrom, setShowFrom]  = useState(false);
-  const [showTo,   setShowTo]    = useState(false);
+  const [date,       setDate]      = useState(new Date().toISOString().split('T')[0]);
+  const [travelTime, setTravelTime] = useState<string>('');
+  const [showFrom,   setShowFrom]  = useState(false);
+  const [showTo,     setShowTo]    = useState(false);
   const [expandedCityId, setExpandedCityId] = useState<number | null>(null);
+
+  // Determine if the selected route is a long-haul (≥6h) trip
+  const LONG_HAUL_ROUTES = POPULAR_ROUTES.filter(r => {
+    const h = parseFloat(r.duration.replace('h', '').split('h')[0]);
+    return h >= 6;
+  }).map(r => `${r.from}-${r.to}`.toLowerCase());
+
+  const isLongHaul = useMemo(() => {
+    if (!fromCity || !toCity) return false;
+    const key = `${fromCity.name}-${toCity.name}`.toLowerCase();
+    const keyRev = `${toCity.name}-${fromCity.name}`.toLowerCase();
+    // Check popular routes list for known long-haul routes
+    const longHaulPairs = [
+      'bamenda-yaoundé', 'yaoundé-bamenda',
+      'bamenda-douala',  'douala-bamenda',
+      'yaoundé-buea',    'buea-yaoundé',
+      'douala-ngaoundéré', 'ngaoundéré-douala',
+      'yaoundé-ngaoundéré', 'ngaoundéré-yaoundé',
+      'douala-bertoua',  'bertoua-douala',
+      'yaoundé-bertoua', 'bertoua-yaoundé',
+      'douala-maroua',   'maroua-douala',
+    ];
+    return longHaulPairs.includes(key) || longHaulPairs.includes(keyRev) || LONG_HAUL_ROUTES.includes(key);
+  }, [fromCity, toCity]);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? t('home.greeting_morning') : hour < 17 ? t('home.greeting_afternoon') : t('home.greeting_evening');
@@ -58,7 +83,11 @@ export default function HomeScreen() {
 
   const handleSearch = () => {
     if (!fromCity || !toCity) return;
-    setSearch(fromCity, toCity, date);
+    if (isLongHaul && !travelTime) return;
+    const searchDate = isLongHaul
+      ? `${date}T${travelTime === 'day' ? '10:00' : '20:00'}`
+      : date + (travelTime ? `T${travelTime}` : '');
+    setSearch(fromCity, toCity, searchDate);
     setBranches(fromBranch, toBranch);
     router.push('/(main)/search');
   };
@@ -85,7 +114,7 @@ export default function HomeScreen() {
   const selectBranch = (city: any, branch: any, type: 'from' | 'to') => {
     if (type === 'from') { 
       setFromCity(city); 
-      setFromBranch(branch); // if branch is null, means "All Branches"
+      setFromBranch(branch);
       setShowFrom(false); 
     } else { 
       setToCity(city);   
@@ -93,6 +122,7 @@ export default function HomeScreen() {
       setShowTo(false);   
     }
     setExpandedCityId(null);
+    setTravelTime(''); // reset time when route changes
   };
 
   const getLabel = (city: any, branch: any, type: 'from' | 'to') => {
@@ -172,8 +202,49 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <TouchableOpacity style={[styles.searchBtn, (!fromCity || !toCity) && { opacity: 0.5 }]}
-            onPress={handleSearch} disabled={Boolean(!fromCity || !toCity)}>
+          <View style={styles.divider} />
+
+          {/* Travel Time / Shift Selector */}
+          <View style={styles.searchRow}>
+            <Text style={styles.searchIcon}>🕐</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.searchLabel}>Departure Time</Text>
+              {isLongHaul ? (
+                <View style={styles.shiftRow}>
+                  <TouchableOpacity
+                    style={[styles.shiftBtn, travelTime === 'day' && styles.shiftBtnActive]}
+                    onPress={() => setTravelTime('day')}
+                  >
+                    <Text style={styles.shiftIcon}>☀️</Text>
+                    <Text style={[styles.shiftLabel, travelTime === 'day' && styles.shiftLabelActive]}>Day Shift</Text>
+                    <Text style={[styles.shiftTime, travelTime === 'day' && styles.shiftTimeActive]}>10:00 AM</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.shiftBtn, travelTime === 'night' && styles.shiftBtnActive]}
+                    onPress={() => setTravelTime('night')}
+                  >
+                    <Text style={styles.shiftIcon}>🌙</Text>
+                    <Text style={[styles.shiftLabel, travelTime === 'night' && styles.shiftLabelActive]}>Night Shift</Text>
+                    <Text style={[styles.shiftTime, travelTime === 'night' && styles.shiftTimeActive]}>8:00 PM</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TextInput
+                  style={styles.searchValue}
+                  value={travelTime}
+                  onChangeText={setTravelTime}
+                  placeholder="HH:MM (optional)"
+                  placeholderTextColor={theme.muted}
+                  keyboardType="numbers-and-punctuation"
+                />
+              )}
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.searchBtn, ((!fromCity || !toCity) || (isLongHaul && !travelTime)) && { opacity: 0.5 }]}
+            onPress={handleSearch}
+            disabled={Boolean(!fromCity || !toCity || (isLongHaul && !travelTime))}>
             <LinearGradient colors={theme.gradientPrimary} style={styles.searchBtnInner}>
               <Text style={styles.searchBtnText}>🔍  {t('home.search_trips')}</Text>
             </LinearGradient>
@@ -325,6 +396,15 @@ const getStyles = (theme: any) => StyleSheet.create({
   branchItem:      { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: theme.border + '50' },
   branchName:      { fontSize: 14, fontWeight: '600', color: theme.text },
   branchAddress:   { fontSize: 11, color: theme.muted, marginTop: 2 },
+
+  shiftRow:        { flexDirection: 'row', gap: 10, marginTop: 6 },
+  shiftBtn:        { flex: 1, borderRadius: 12, borderWidth: 2, borderColor: theme.border, padding: 10, alignItems: 'center', backgroundColor: theme.background },
+  shiftBtnActive:  { borderColor: theme.primary, backgroundColor: theme.primary + '15' },
+  shiftIcon:       { fontSize: 18, marginBottom: 2 },
+  shiftLabel:      { fontSize: 12, fontWeight: '700', color: theme.muted },
+  shiftLabelActive:{ color: theme.primary },
+  shiftTime:       { fontSize: 13, fontWeight: '800', color: theme.text, marginTop: 2 },
+  shiftTimeActive: { color: theme.primary },
 
   section:         { paddingHorizontal:20, marginTop:28 },
   sectionHeader:   { flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:16 },
