@@ -13,7 +13,7 @@ export default function BookingSummaryScreen() {
   const { t }    = useTranslation();
   const router   = useRouter();
   const { user } = useAuthStore();
-  const { selectedSchedule, selectedSeats, fromCity, toCity, travelDate, paymentMethod, setBookingRef, setPayMethod } = useBookingStore();
+  const { selectedSchedule, selectedSeats, fromCity, toCity, travelDate, setBookingRef } = useBookingStore();
   const theme = useThemeColor();
   const styles = getStyles(theme);
 
@@ -23,10 +23,12 @@ export default function BookingSummaryScreen() {
       selectedSchedule.price_standard)
     : 0;
   const total = pricePerSeat * selectedSeats.length;
+  // Strip shift suffix (e.g. '2026-05-27Tnight' -> '2026-05-27')
+  const displayDate = travelDate?.length > 10 ? travelDate.slice(0, 10) : travelDate;
 
   const { mutate: confirmBooking, isPending } = useMutation({
     mutationFn: () => bookingService.create({
-      schedule_id: selectedSchedule.id,
+      schedule_id: selectedSchedule?.id,
       seat_ids: selectedSeats.map(s => s.id),
       payment_method: paymentMethod ?? 'mtn_momo',
       passengers: selectedSeats.map(() => ({ name: user?.full_name })),
@@ -50,7 +52,7 @@ export default function BookingSummaryScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#007A33','#005522']} style={styles.header}>
+      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
@@ -85,11 +87,19 @@ export default function BookingSummaryScreen() {
         {/* Trip Details */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>📋 Trip Information</Text>
-          <Row label={t('booking.travel_date')}    value={travelDate} />
+          <Row label={t('booking.travel_date')}    value={displayDate} />
           <Row label={t('booking.departure_time')} value={selectedSchedule?.departure_time?.slice(0,5) ?? '--'} />
           <Row label="Company"                     value={selectedSchedule?.company_name ?? ''} />
           <Row label="Bus Type"                    value={selectedSchedule?.bus_type ?? ''} />
           <Row label="Plate No."                   value={selectedSchedule?.plate_number ?? ''} />
+          {/* Bus Signature — most important for finding the bus at the park */}
+          <View style={styles.sigRow}>
+            <Text style={styles.sigRowLabel}>🏷️ Your Bus ID</Text>
+            <View style={styles.sigBox}>
+              <Text style={styles.sigBoxText}>{selectedSchedule?.bus_signature ?? selectedSchedule?.plate_number ?? '--'}</Text>
+            </View>
+          </View>
+          <Text style={styles.sigHint}>Show this ID at the park to find your bus</Text>
         </View>
 
         {/* Seats */}
@@ -131,11 +141,18 @@ export default function BookingSummaryScreen() {
         </View>
         <TouchableOpacity
           style={[styles.confirmBtn, isPending && { opacity: 0.7 }]}
-          onPress={() => confirmBooking()}
+          onPress={() => {
+            if (!user) {
+              Toast.show({ type: 'info', text1: 'Login Required', text2: 'Please login to confirm your booking.' });
+              router.push('/(auth)/login');
+              return;
+            }
+            confirmBooking();
+          }}
           disabled={Boolean(isPending)}
           activeOpacity={0.85}
         >
-          <LinearGradient colors={['#007A33','#00A344']} style={styles.confirmBtnInner}>
+          <LinearGradient colors={theme.gradientPrimary} style={styles.confirmBtnInner}>
             <Text style={styles.confirmBtnText}>
               {isPending ? t('common.loading') : t('booking.confirm_booking')} →
             </Text>
@@ -173,6 +190,11 @@ const getStyles = (theme: any) => StyleSheet.create({
   seatChipText:     { fontSize: 14, fontWeight: '700', color: theme.primary },
   vipChipText:      { color: theme.primary },
   divider:          { height: 1, backgroundColor: theme.border, marginVertical: 8 },
+  sigRow:           { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: theme.border },
+  sigRowLabel:      { fontSize: 14, color: theme.text, fontWeight: '600' },
+  sigBox:           { backgroundColor: '#1A1F36', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10 },
+  sigBoxText:       { fontSize: 18, fontWeight: '900', color: '#FCD116', letterSpacing: 2 },
+  sigHint:          { fontSize: 11, color: theme.muted, marginTop: 8, fontStyle: 'italic', textAlign: 'center' },
   footer:           { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: theme.card, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingBottom: 34, shadowColor:'#000', shadowOffset:{width:0,height:-4}, shadowOpacity:0.1, shadowRadius:12, elevation:20 },
   footerLabel:      { fontSize: 12, color: theme.muted },
   footerTotal:      { fontSize: 24, fontWeight: '800', color: theme.primary },

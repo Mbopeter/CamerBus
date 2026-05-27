@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import QRCode from 'react-native-qrcode-svg';
 import { bookingService } from '../../../services/endpoints';
 import { useThemeColor } from '../../../hooks/useThemeColor';
+import { useBookingStore } from '../../../store/useBookingStore';
 
 export default function TicketDetailScreen() {
   const { code }  = useLocalSearchParams<{ code: string }>();
@@ -19,6 +20,8 @@ export default function TicketDetailScreen() {
     queryFn:  () => bookingService.getByRef(code!).then(r => r.data.data),
     enabled:  !!code,
   });
+  // MUST be here — before any early return — to satisfy Rules of Hooks
+  const { setBookingRef } = useBookingStore();
 
   if (isLoading || !booking) {
     return (
@@ -33,6 +36,8 @@ export default function TicketDetailScreen() {
   const seat    = booking.seats?.[0];
   const payment = booking.payment;
   const isValid = booking.status === 'confirmed' && payment?.status === 'approved';
+  // Only block for info if confirmed (payment approved) and info is missing
+  const needsInfo = isValid && booking.seats?.some((s: any) => !s.passenger_id_no || !s.passenger_name);
 
   const handleShare = async () => {
     try {
@@ -65,7 +70,23 @@ export default function TicketDetailScreen() {
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* QR Code Card */}
-        {isValid && ticket ? (
+        {needsInfo ? (
+          <View style={[styles.pendingCard, { borderColor: theme.danger, borderWidth: 2 }]}>
+            <Text style={[styles.pendingIcon, { color: theme.danger }]}>⚠️</Text>
+            <Text style={[styles.pendingText, { color: theme.text }]}>
+              Passenger information is missing. You must provide ID details for all passengers before your ticket is generated.
+            </Text>
+            <TouchableOpacity 
+              style={{ backgroundColor: theme.primary, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12, marginTop: 12 }}
+              onPress={() => {
+                setBookingRef(booking.booking_ref, booking.payment?.id);
+                router.push('/(main)/tickets/passenger-info');
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold' }}>Complete Details Now</Text>
+            </TouchableOpacity>
+          </View>
+        ) : isValid && ticket ? (
           <View style={styles.qrCard}>
             <View style={styles.qrInstructions}>
               <Text style={styles.qrInstructionsText}>{t('ticket.qr_instruction')}</Text>
@@ -114,6 +135,7 @@ export default function TicketDetailScreen() {
         {/* Ticket Info */}
         <View style={styles.infoCard}>
           <Row label={t('ticket.passenger')}  value={booking.passenger_name ?? '—'} />
+          <Row label="ID Card No."            value={seat?.passenger_id_no ?? '—'} />
           <Row label={t('ticket.company')}    value={booking.company_name} />
           <Row label={t('ticket.bus')}        value={`${booking.bus_type} · ${booking.plate_number}`} />
           <Row label={t('ticket.seat')}       value={seat?.seat_number ?? '—'} />

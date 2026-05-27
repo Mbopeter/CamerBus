@@ -34,21 +34,30 @@ class ParcelController
 
         $tracking = QRGenerator::generateTrackingNumber();
 
+        // Auto-assign an available (non-faulty) bus for this company for parcel tracking
+        $assignedBus = Database::query(
+            'SELECT id, bus_signature FROM buses
+             WHERE company_id = ? AND is_active = 1 AND is_faulty = 0
+             ORDER BY RAND() LIMIT 1',
+            [(int) $body['company_id']]
+        )->fetch();
+        $assignedBusId = $assignedBus ? (int) $assignedBus['id'] : null;
+
         Database::beginTransaction();
         try {
             Database::query(
                 'INSERT INTO parcel_shipments
                     (tracking_number, sender_id, sender_name, sender_phone,
                      receiver_name, receiver_phone, origin_branch_id, dest_branch_id,
-                     company_id, description, weight_kg, dimensions, is_fragile,
+                     company_id, assigned_bus_id, description, weight_kg, dimensions, is_fragile,
                      declared_value, shipping_cost, payment_method, status)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,\'received\')',
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,\'received\')',
                 [
                     $tracking, $auth ? (int)$auth['sub'] : null,
                     $body['sender_name'], $body['sender_phone'],
                     $body['receiver_name'], $body['receiver_phone'],
                     $originBranchId, $destBranchId,
-                    (int) $body['company_id'], $body['description'],
+                    (int) $body['company_id'], $assignedBusId, $body['description'],
                     $weight, $body['dimensions'] ?? null,
                     (int) ($body['is_fragile'] ?? 0), $body['declared_value'] ?? null,
                     $shippingCost, $body['payment_method'] ?? 'cash',
@@ -80,20 +89,22 @@ class ParcelController
     public static function show(string $trackingOrId): void
     {
         // Public endpoint — no auth required for tracking
-        $col     = is_numeric($trackingOrId) ? 'id' : 'tracking_number';
+        $col     = is_numeric($trackingOrId) ? 'ps.id' : 'ps.tracking_number';
         $parcel  = Database::query(
             "SELECT ps.*,
                 ob.name AS origin_branch_name, ob.address AS origin_address,
                 db.name AS dest_branch_name,   db.address AS dest_address,
                 oc.name AS origin_city, dc.name AS dest_city,
-                c.name AS company_name, c.logo_url
+                c.name AS company_name, c.logo_url,
+                b.bus_signature, b.plate_number AS bus_plate, b.bus_type AS bus_type_name
              FROM parcel_shipments ps
              JOIN branches ob  ON ps.origin_branch_id = ob.id
              JOIN branches db  ON ps.dest_branch_id = db.id
              JOIN cities oc    ON ob.city_id = oc.id
              JOIN cities dc    ON db.city_id = dc.id
              JOIN companies c  ON ps.company_id = c.id
-             WHERE ps.$col = ?", [$trackingOrId]
+             LEFT JOIN buses b ON ps.assigned_bus_id = b.id
+             WHERE $col = ?", [$trackingOrId]
         )->fetch();
 
         if (!$parcel) Response::error('Parcel not found', 404);

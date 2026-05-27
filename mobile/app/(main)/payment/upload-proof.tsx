@@ -54,7 +54,7 @@ export default function UploadProofScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#007A33','#005522']} style={styles.header}>
+      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
@@ -103,7 +103,7 @@ export default function UploadProofScreen() {
           disabled={Boolean(!image || isPending)}
           activeOpacity={0.85}
         >
-          <LinearGradient colors={['#007A33','#00A344']} style={styles.submitBtnInner}>
+          <LinearGradient colors={theme.gradientPrimary} style={styles.submitBtnInner}>
             <Text style={styles.submitBtnText}>
               {isPending ? t('common.loading') : t('payment.submit_proof')} →
             </Text>

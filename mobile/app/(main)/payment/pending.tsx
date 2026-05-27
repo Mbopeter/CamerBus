@@ -7,10 +7,12 @@ import { useQuery } from '@tanstack/react-query';
 import { bookingService } from '../../../services/endpoints';
 import { useBookingStore } from '../../../store/useBookingStore';
 import { Colors } from '../../../constants/colors';
+import { useThemeColor } from '../../../hooks/useThemeColor';
 
 export default function PaymentPendingScreen() {
   const { t }         = useTranslation();
   const router        = useRouter();
+  const theme         = useThemeColor();
   const { bookingRef, reset } = useBookingStore();
   const pulse = new Animated.Value(1);
 
@@ -35,13 +37,13 @@ export default function PaymentPendingScreen() {
 
   useEffect(() => {
     if (status === 'approved') {
-      router.replace(`/(main)/tickets`);
+      router.replace(`/(main)/tickets/passenger-info`);
     }
   }, [status]);
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#007A33','#005522']} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={theme.gradientPrimary} style={StyleSheet.absoluteFill} />
       <View style={styles.circle1} /><View style={styles.circle2} />
 
       <View style={styles.content}>

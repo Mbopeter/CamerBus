@@ -46,32 +46,42 @@ class SeatController
 
     private static function generateDefaultLayout(int $busId, int $totalSeats): array
     {
-        // Auto-generate and persist seat layout
-        $seats = [];
-        $rows  = (int) ceil($totalSeats / 4);
+        // Auto-generate and persist seat layout numbered 1 to 70
+        $layout = [
+            0  => 2,  // Driver row: 2 passenger seats on right
+            1  => 5,
+            2  => 5,
+            3  => 5,
+            4  => 3,  // Door row: 3 left seats, DOOR on right
+            5  => 5,
+            6  => 5,
+            7  => 5,
+            8  => 5,
+            9  => 5,
+            10 => 5,
+            11 => 5,
+            12 => 3,  // Door row: 3 left seats, DOOR on right
+            13 => 5,
+            14 => 7,  // Back row: 7 seats
+        ];
 
-        for ($row = 1; $row <= $rows; $row++) {
-            $positions = ['A', 'B', 'C', 'D'];
-            foreach ($positions as $pos) {
-                $seatNum = $row . $pos;
-                $seatType = ($row <= 3 && in_array($pos, ['A', 'D'])) ? 'vip' : 'standard';
-                $position = match($pos) {
-                    'A' => 'window_left',
-                    'B' => 'aisle_left',
-                    'C' => 'aisle_right',
-                    'D' => 'window_right',
-                    default => 'standard',
-                };
+        $seats   = [];
+        $seatNum = 1;
 
-                // Insert if not exists
+        foreach ($layout as $row => $count) {
+            for ($i = 1; $i <= $count; $i++) {
+                if ($seatNum > $totalSeats) break 2;
+
+                $seatType = ($row <= 3 && $row > 0) ? 'vip' : 'standard';
+
                 $existing = Database::query(
-                    'SELECT id FROM seats WHERE bus_id = ? AND seat_number = ?', [$busId, $seatNum]
+                    'SELECT id FROM seats WHERE bus_id = ? AND seat_number = ?', [$busId, (string)$seatNum]
                 )->fetch();
 
                 if (!$existing) {
                     Database::query(
                         'INSERT INTO seats (bus_id, seat_number, row_number, seat_position, seat_type) VALUES (?,?,?,?,?)',
-                        [$busId, $seatNum, $row, $position, $seatType]
+                        [$busId, (string)$seatNum, $row, 'standard', $seatType]
                     );
                     $id = (int) Database::lastInsertId();
                 } else {
@@ -81,15 +91,15 @@ class SeatController
                 $seats[] = [
                     'id'            => $id,
                     'bus_id'        => $busId,
-                    'seat_number'   => $seatNum,
+                    'seat_number'   => (string)$seatNum,
                     'row_number'    => $row,
-                    'seat_position' => $position,
+                    'seat_position' => 'standard',
                     'seat_type'     => $seatType,
                     'is_booked'     => 0,
                     'is_held'       => 0,
                 ];
 
-                if (count($seats) >= $totalSeats) break 2;
+                $seatNum++;
             }
         }
         return $seats;

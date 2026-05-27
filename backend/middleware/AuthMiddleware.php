@@ -37,9 +37,13 @@ class AuthMiddleware
 
     private static function extractToken(): ?string
     {
+        $headers = function_exists('getallheaders') ? getallheaders() : [];
+        // Make headers array lowercase for case-insensitive lookup
+        $lowerHeaders = array_change_key_case($headers, CASE_LOWER);
+
         $header = $_SERVER['HTTP_AUTHORIZATION']
             ?? $_SERVER['HTTP_BEARER']
-            ?? getallheaders()['Authorization']
+            ?? ($lowerHeaders['authorization'] ?? '')
             ?? '';
         if (str_starts_with($header, 'Bearer ')) {
             return substr($header, 7);

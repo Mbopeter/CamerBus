@@ -86,6 +86,7 @@ match (true) {
     $seg1 === 'bookings' && $seg3 === ''     && $method === 'GET'  => BookingController::show($seg2),
     $seg1 === 'bookings' && $seg3 === ''     && $method === 'DELETE' => BookingController::cancel($seg2),
     $seg1 === 'bookings' && $seg2 === 'user' && $method === 'GET' => BookingController::byUser((int)$seg3),
+    $seg1 === 'bookings' && $seg3 === 'passenger-info' && $method === 'PUT' => BookingController::updatePassengerInfo($seg2, $body),
 
     // PAYMENTS
     $seg1 === 'payments' && $seg2 === '' && $method === 'POST'                       => PaymentController::store($body),
@@ -114,7 +115,13 @@ match (true) {
     $seg1 === 'admin' && $seg2 === 'payments'         && $method === 'GET'           => AdminController::pendingPayments(),
     $seg1 === 'admin' && $seg2 === 'bookings'         && $method === 'GET'           => AdminController::allBookings(),
     $seg1 === 'admin' && $seg2 === 'companies'        && $method === 'POST'          => AdminController::createCompany($body),
+    $seg1 === 'admin' && $seg2 === 'companies' && $seg3 === '' && $method === 'DELETE' => AdminController::deleteCompany((int)$seg2),
+    $seg1 === 'admin' && $seg2 === 'routes'           && $method === 'POST'          => AdminController::createRoute($body),
+    $seg1 === 'admin' && $seg2 === 'routes' && $seg3 === '' && $method === 'DELETE'  => AdminController::deleteRoute((int)$seg2),
+    $seg1 === 'admin' && $seg2 === 'buses'            && $method === 'GET'           => AdminController::listBuses(),
     $seg1 === 'admin' && $seg2 === 'buses'            && $method === 'POST'          => AdminController::createBus($body),
+    $seg1 === 'admin' && $seg2 === 'buses' && $seg3 !== '' && $segments[4] === 'faulty'      && $method === 'PUT' => AdminController::markBusFaulty((int)$seg3),
+    $seg1 === 'admin' && $seg2 === 'buses' && $seg3 !== '' && $segments[4] === 'operational' && $method === 'PUT' => AdminController::markBusOperational((int)$seg3),
     $seg1 === 'admin' && $seg2 === 'admins'           && $method === 'POST'          => AdminController::createAdmin($body),
     $seg1 === 'admin' && $seg2 === 'admins'           && $method === 'GET'           => AdminController::listAdmins(),
     $seg1 === 'admin' && $seg2 === 'parcels'          && $method === 'GET'           => AdminController::allParcels(),

@@ -20,7 +20,7 @@ export default function CompaniesScreen() {
   });
 
   const filtered = (data ?? []).filter((c: any) =>
-    c.name.toLowerCase().includes(search.toLowerCase())
+    (c.name ?? '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (

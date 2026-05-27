@@ -36,7 +36,7 @@ export default function ProfileScreen() {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Header */}
-      <LinearGradient colors={['#007A33','#005522']} style={styles.header}>
+      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
         <View style={styles.circle} />
         <View style={styles.avatarWrap}>
           <Text style={styles.avatarEmoji}>👤</Text>

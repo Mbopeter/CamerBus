@@ -30,7 +30,7 @@ export default function PaymentMethodScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#007A33','#005522']} style={styles.header}>
+      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>

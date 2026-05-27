@@ -205,4 +205,49 @@ class BookingController
             Response::error('Cancellation failed: ' . $e->getMessage(), 500);
         }
     }
+
+    public static function updatePassengerInfo(string $ref, array $body): void
+    {
+        $auth   = AuthMiddleware::handle();
+        $userId = (int) $auth['sub'];
+
+        $booking = Database::query('SELECT * FROM bookings WHERE booking_ref = ? AND deleted_at IS NULL', [$ref])->fetch();
+        if (!$booking) Response::error('Booking not found', 404);
+        if ($auth['role'] === 'user' && (int)$booking['user_id'] !== $userId) {
+            Response::error('Access denied', 403);
+        }
+
+        $passengers = $body['passengers'] ?? [];
+        if (empty($passengers) || !is_array($passengers)) {
+            Response::error('Passengers array is required', 422);
+        }
+
+        Database::beginTransaction();
+        try {
+            foreach ($passengers as $p) {
+                $seatId = (int) ($p['seat_id'] ?? 0);
+                if (!$seatId) continue;
+
+                $name = trim($p['name'] ?? '');
+                $idNo = trim($p['id_no'] ?? '');
+                $emergency = trim($p['emergency_contact'] ?? '');
+
+                if (!$name || !$idNo) {
+                    throw new Exception("Name and ID Number are required for all passengers");
+                }
+
+                Database::query(
+                    'UPDATE booking_seats
+                     SET passenger_name = ?, passenger_id_no = ?, emergency_contact = ?
+                     WHERE booking_id = ? AND seat_id = ?',
+                    [$name, $idNo, $emergency, $booking['id'], $seatId]
+                );
+            }
+            Database::commit();
+            Response::success(null, 'Passenger info updated successfully');
+        } catch (\Throwable $e) {
+            Database::rollback();
+            Response::error('Failed to update passenger info: ' . $e->getMessage(), 500);
+        }
+    }
 }

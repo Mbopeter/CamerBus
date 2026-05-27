@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -9,7 +9,7 @@ import { useBookingStore } from '../../../store/useBookingStore';
 import { useThemeColor } from '../../../hooks/useThemeColor';
 
 const { width } = Dimensions.get('window');
-const SEAT_SIZE = (width - 80) / 5;
+const SEAT_SIZE = (width - 60) / 7;
 
 export default function SeatsScreen() {
   const { t }      = useTranslation();
@@ -52,10 +52,27 @@ export default function SeatsScreen() {
       )
     : 0;
 
+  const renderSeat = (seat: any) => (
+    <TouchableOpacity
+      key={seat.id}
+      style={[styles.seat, { backgroundColor: getSeatColor(seat) }]}
+      onPress={() => !seat.is_booked && !seat.is_held && toggleSeat(seat)}
+      disabled={Boolean(seat.is_booked || seat.is_held)}
+      activeOpacity={0.75}
+    >
+      <Text style={[styles.seatText, { color: getSeatTextColor(seat) }]}>
+        {seat.seat_number}
+      </Text>
+      {seat.seat_type === 'vip' && (
+        <Text style={styles.vipStar}>★</Text>
+      )}
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
       {/* Header */}
-      <LinearGradient colors={['#007A33','#005522']} style={styles.header}>
+      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
@@ -83,62 +100,74 @@ export default function SeatsScreen() {
           <Text style={styles.busFrontText}>🚌 FRONT</Text>
         </View>
 
-        {/* Driver seat */}
-        <View style={styles.driverRow}>
-          <View style={[styles.seat, { backgroundColor: theme.muted, opacity: 0.4 }]}>
-            <Text style={styles.seatText}>D</Text>
-          </View>
-        </View>
-
         {isLoading ? (
           <ActivityIndicator color={theme.primary} style={{ marginTop: 40 }} size="large" />
-        ) : (
-          Object.entries(rows).map(([rowNum, rowSeats]) => (
-            <View key={rowNum} style={styles.seatRow}>
-              <Text style={styles.rowNum}>{rowNum}</Text>
-              {/* Left pair (A, B) */}
-              <View style={styles.seatPair}>
-                {rowSeats.filter(s => ['A','B'].includes(s.seat_number.slice(-1))).map(seat => (
-                  <TouchableOpacity
-                    key={seat.id}
-                    style={[styles.seat, { backgroundColor: getSeatColor(seat) }]}
-                    onPress={() => !seat.is_booked && !seat.is_held && toggleSeat(seat)}
-                    disabled={Boolean(seat.is_booked || seat.is_held)}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={[styles.seatText, { color: getSeatTextColor(seat) }]}>
-                      {seat.seat_number}
-                    </Text>
-                    {seat.seat_type === 'vip' && (
-                      <Text style={styles.vipStar}>★</Text>
-                    )}
-                  </TouchableOpacity>
-                ))}
+        ) : (() => {
+          const allRows = Object.entries(rows).sort((a, b) => Number(a[0]) - Number(b[0]));
+
+          return (
+            <>
+              {/* ── Driver row: DRIVER on left │ aisle │ passenger seats on right (if any) ── */}
+              <View style={styles.driverRow}>
+                <Text style={styles.rowNum}></Text>
+                <View style={[styles.seatPair, { flex: 1 }]}>
+                  <View style={[styles.seat, { backgroundColor: theme.muted, opacity: 0.4 }]}>
+                    <Text style={styles.seatText}>DRIVER</Text>
+                  </View>
+                </View>
+                <View style={styles.aisle} />
+                <View style={styles.seatPair}>
+                  {rows[0] ? rows[0].sort((a: any, b: any) => Number(a.seat_number) - Number(b.seat_number)).map((seat: any) => renderSeat(seat)) : null}
+                </View>
               </View>
-              {/* Aisle */}
-              <View style={styles.aisle} />
-              {/* Right pair (C, D) */}
-              <View style={styles.seatPair}>
-                {rowSeats.filter(s => ['C','D'].includes(s.seat_number.slice(-1))).map(seat => (
-                  <TouchableOpacity
-                    key={seat.id}
-                    style={[styles.seat, { backgroundColor: getSeatColor(seat) }]}
-                    onPress={() => !seat.is_booked && !seat.is_held && toggleSeat(seat)}
-                    disabled={Boolean(seat.is_booked || seat.is_held)}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={[styles.seatText, { color: getSeatTextColor(seat) }]}>
-                      {seat.seat_number}
-                    </Text>
-                    {seat.seat_type === 'vip' && (
-                      <Text style={styles.vipStar}>★</Text>
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          ))
-        )}
+
+              {allRows.map(([rowNum, rowSeats]) => {
+                const sorted = [...(rowSeats as any[])].sort((a, b) => Number(a.seat_number) - Number(b.seat_number));
+                const rn     = Number(rowNum);
+                
+                if (rn === 0) return null; // handled in driverRow
+
+                const isDoorRow = rn === 4 || rn === 12;
+                const isBackRow = rn === 14;
+
+                // For the back row, render all seats in one continuous group
+                if (isBackRow) {
+                  return (
+                    <View key={rowNum} style={styles.seatRow}>
+                      <Text style={styles.rowNum}>{rowNum}</Text>
+                      <View style={[styles.seatPair, { flex: 1, justifyContent: 'center', gap: 6 }]}>
+                        {sorted.map(seat => renderSeat(seat))}
+                      </View>
+                    </View>
+                  );
+                }
+
+                // Standard row (up to 3 left, up to 2 right)
+                const leftSeats  = sorted.slice(0, 3);
+                const rightSeats = sorted.slice(3, 5);
+
+                return (
+                  <View key={rowNum} style={styles.seatRow}>
+                    <Text style={styles.rowNum}>{rowNum}</Text>
+                    <View style={styles.seatPair}>
+                      {leftSeats.map(seat => renderSeat(seat))}
+                    </View>
+                    <View style={styles.aisle} />
+                    <View style={[styles.seatPair, { width: SEAT_SIZE * 0.9 * 2 + 6, justifyContent: 'center' }]}>
+                      {rightSeats.length > 0 ? (
+                        rightSeats.map(seat => renderSeat(seat))
+                      ) : isDoorRow ? (
+                        <View style={styles.doorIndicator}>
+                          <Text style={styles.doorText}>DOOR</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                  </View>
+                );
+              })}
+            </>
+          );
+        })()}
         <View style={{ height: 140 }} />
       </ScrollView>
 
@@ -154,7 +183,7 @@ export default function SeatsScreen() {
             </Text>
           </View>
           <TouchableOpacity style={styles.continueBtn} onPress={() => router.push('/(main)/booking/summary')} activeOpacity={0.85}>
-            <LinearGradient colors={['#007A33','#00A344']} style={styles.continueBtnInner}>
+            <LinearGradient colors={theme.gradientPrimary} style={styles.continueBtnInner}>
               <Text style={styles.continueBtnText}>{t('booking.continue')} →</Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -176,15 +205,17 @@ const getStyles = (theme: any) => StyleSheet.create({
   legendDot:      { width: 14, height: 14, borderRadius: 4 },
   legendText:     { fontSize: 11, color: 'rgba(255,255,255,0.85)', fontWeight: '600' },
   seatArea:       { flex: 1 },
-  seatContent:    { padding: 20, alignItems: 'center' },
-  busFront:       { width: '80%', height: 36, backgroundColor: '#1A1F36', borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  seatContent:    { paddingTop: 20, paddingRight: 20, paddingBottom: 20, paddingLeft: 0, alignItems: 'center' },
+  busFront:       { width: '90%', height: 36, backgroundColor: '#1A1F36', borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   busFrontText:   { color: '#fff', fontSize: 13, fontWeight: '700', letterSpacing: 2 },
-  driverRow:      { flexDirection: 'row', justifyContent: 'flex-end', width: '80%', marginBottom: 8 },
-  seatRow:        { flexDirection: 'row', alignItems: 'center', marginBottom: 8, width: '80%', gap: 4 },
+  driverRow:      { flexDirection: 'row', alignItems: 'center', width: '90%', marginBottom: 12, paddingRight: 4 },
+  seatRow:        { flexDirection: 'row', alignItems: 'center', marginBottom: 8, width: '90%', gap: 4 },
   rowNum:         { width: 20, fontSize: 11, color: theme.muted, textAlign: 'center' },
   seatPair:       { flexDirection: 'row', gap: 6 },
   aisle:          { flex: 1 },
-  seat:           { width: SEAT_SIZE * 0.85, height: SEAT_SIZE * 0.85, borderRadius: 8, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  doorIndicator:  { width: SEAT_SIZE * 1.8, height: SEAT_SIZE * 0.85, borderRadius: 8, borderWidth: 1, borderColor: theme.border, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.card },
+  doorText:       { fontSize: 10, fontWeight: '700', color: theme.muted, letterSpacing: 1 },
+  seat:           { width: SEAT_SIZE * 0.9, height: SEAT_SIZE * 0.9, borderRadius: 8, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   seatText:       { fontSize: 10, fontWeight: '700' },
   vipStar:        { position: 'absolute', top: 1, right: 2, fontSize: 8, color: '#FCD116' },
   bottomBar:      { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: theme.card, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingBottom: 34, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 20 },

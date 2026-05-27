@@ -108,6 +108,14 @@ export default function TrackParcelScreen() {
                   <Text style={styles.detailValue}>{v}</Text>
                 </View>
               ))}
+              {/* Bus signature for in-transit parcels */}
+              {(data.status === 'in_transit' || data.status === 'received') && data.bus_signature && (
+                <View style={styles.busSignatureBox}>
+                  <Text style={styles.busSignatureTitle}>🚌 Your Package is on Bus</Text>
+                  <Text style={styles.busSignatureCode}>{data.bus_signature}</Text>
+                  <Text style={styles.busSignatureHint}>Show this to park staff to verify your package location</Text>
+                </View>
+              )}
             </View>
 
             {/* Tracking Timeline */}
@@ -176,4 +184,8 @@ const getStyles = (theme: any) => StyleSheet.create({
   timelineLocation:{ fontSize: 12, color: theme.textLight, marginTop: 3 },
   timelineDesc:    { fontSize: 12, color: theme.muted, marginTop: 2 },
   timelineTime:    { fontSize: 11, color: theme.muted, marginTop: 4 },
+  busSignatureBox: { marginTop: 14, backgroundColor: '#1A1F36', borderRadius: 14, padding: 16, alignItems: 'center', gap: 6 },
+  busSignatureTitle:{ fontSize: 13, color: 'rgba(255,255,255,0.75)', fontWeight: '600' },
+  busSignatureCode: { fontSize: 28, fontWeight: '900', color: '#FCD116', letterSpacing: 3 },
+  busSignatureHint: { fontSize: 11, color: 'rgba(255,255,255,0.5)', textAlign: 'center', fontStyle: 'italic' },
 });

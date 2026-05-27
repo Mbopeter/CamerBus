@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Dimensions, RefreshControl,
@@ -18,9 +18,12 @@ const { width } = Dimensions.get('window');
 const POPULAR_ROUTES = [
   { from: 'Bamenda', to: 'Yaoundé', price: '6,500', duration: '6h' },
   { from: 'Douala',  to: 'Yaoundé', price: '4,000', duration: '4h' },
-  { from: 'Bamenda', to: 'Douala',  price: '6,000', duration: '5h' },
-  { from: 'Douala',  to: 'Buea',    price: '2,000', duration: '1h30' },
-  { from: 'Yaoundé', to: 'Buea',    price: '6,000', duration: '5h30' },
+  { from: 'Bamenda', to: 'Douala',  price: '6,000', duration: '6h' },
+  { from: 'Yaoundé', to: 'Buea',   price: '6,000', duration: '6h' },
+  { from: 'Yaoundé', to: 'Limbe',  price: '6,000', duration: '6h' },
+  { from: 'Bamenda', to: 'Buea',   price: '6,500', duration: '6h' },
+  { from: 'Bamenda', to: 'Limbe',  price: '6,500', duration: '6h' },
+  { from: 'Douala',  to: 'Buea',   price: '2,000', duration: '1h15' },
 ];
 
 export default function HomeScreen() {
@@ -42,30 +45,6 @@ export default function HomeScreen() {
   const [showTo,     setShowTo]    = useState(false);
   const [expandedCityId, setExpandedCityId] = useState<number | null>(null);
 
-  // Determine if the selected route is a long-haul (≥6h) trip
-  const LONG_HAUL_ROUTES = POPULAR_ROUTES.filter(r => {
-    const h = parseFloat(r.duration.replace('h', '').split('h')[0]);
-    return h >= 6;
-  }).map(r => `${r.from}-${r.to}`.toLowerCase());
-
-  const isLongHaul = useMemo(() => {
-    if (!fromCity || !toCity) return false;
-    const key = `${fromCity.name}-${toCity.name}`.toLowerCase();
-    const keyRev = `${toCity.name}-${fromCity.name}`.toLowerCase();
-    // Check popular routes list for known long-haul routes
-    const longHaulPairs = [
-      'bamenda-yaoundé', 'yaoundé-bamenda',
-      'bamenda-douala',  'douala-bamenda',
-      'yaoundé-buea',    'buea-yaoundé',
-      'douala-ngaoundéré', 'ngaoundéré-douala',
-      'yaoundé-ngaoundéré', 'ngaoundéré-yaoundé',
-      'douala-bertoua',  'bertoua-douala',
-      'yaoundé-bertoua', 'bertoua-yaoundé',
-      'douala-maroua',   'maroua-douala',
-    ];
-    return longHaulPairs.includes(key) || longHaulPairs.includes(keyRev) || LONG_HAUL_ROUTES.includes(key);
-  }, [fromCity, toCity]);
-
   const hour = new Date().getHours();
   const greeting = hour < 12 ? t('home.greeting_morning') : hour < 17 ? t('home.greeting_afternoon') : t('home.greeting_evening');
 
@@ -81,12 +60,18 @@ export default function HomeScreen() {
     staleTime: 60000,
   });
 
+  // Fixed shift slots for all routes
+  const SHIFT_SLOTS = [
+    { key: 'day',   icon: '☀️', label: 'Day Shift',   time: '10:00', display: '10:00 AM' },
+    { key: 'night', icon: '🌙', label: 'Night Shift', time: '20:00', display: '8:00 PM' },
+  ];
+
   const handleSearch = () => {
-    if (!fromCity || !toCity) return;
-    if (isLongHaul && !travelTime) return;
-    const searchDate = isLongHaul
-      ? `${date}T${travelTime === 'day' ? '10:00' : '20:00'}`
-      : date + (travelTime ? `T${travelTime}` : '');
+    if (!fromCity || !toCity || !travelTime) return;
+    
+    const selectedSlot = SHIFT_SLOTS.find(s => s.key === travelTime);
+    const searchDate = selectedSlot ? `${date}T${selectedSlot.key}` : date;
+    
     setSearch(fromCity, toCity, searchDate);
     setBranches(fromBranch, toBranch);
     router.push('/(main)/search');
@@ -108,6 +93,7 @@ export default function HomeScreen() {
       if (type === 'from') { setFromCity(city); setFromBranch(null); setShowFrom(false); }
       else                 { setToCity(city);   setToBranch(null);   setShowTo(false);   }
       setExpandedCityId(null);
+      setTravelTime(''); // reset shift when route changes
     }
   };
 
@@ -168,6 +154,7 @@ export default function HomeScreen() {
             const tC = fromCity; const tB = fromBranch;
             setFromCity(toCity); setFromBranch(toBranch);
             setToCity(tC);       setToBranch(tB);
+            setTravelTime(''); // reset shift when swapping route
           }}>
             <Text style={{ fontSize: 20, transform: [{ rotate: '90deg' }] }}>⇄</Text>
           </TouchableOpacity>
@@ -204,47 +191,38 @@ export default function HomeScreen() {
 
           <View style={styles.divider} />
 
-          {/* Travel Time / Shift Selector */}
+          {/* Shift Selector */}
           <View style={styles.searchRow}>
             <Text style={styles.searchIcon}>🕐</Text>
             <View style={{ flex: 1 }}>
-              <Text style={styles.searchLabel}>Departure Time</Text>
-              {isLongHaul ? (
-                <View style={styles.shiftRow}>
+              <Text style={styles.searchLabel}>Departure Shift (Required)</Text>
+              <View style={styles.shiftRow}>
+                {SHIFT_SLOTS.map(slot => (
                   <TouchableOpacity
-                    style={[styles.shiftBtn, travelTime === 'day' && styles.shiftBtnActive]}
-                    onPress={() => setTravelTime('day')}
+                    key={slot.key}
+                    style={[styles.shiftBtn, travelTime === slot.key && styles.shiftBtnActive]}
+                    onPress={() => setTravelTime(slot.key)}
                   >
-                    <Text style={styles.shiftIcon}>☀️</Text>
-                    <Text style={[styles.shiftLabel, travelTime === 'day' && styles.shiftLabelActive]}>Day Shift</Text>
-                    <Text style={[styles.shiftTime, travelTime === 'day' && styles.shiftTimeActive]}>10:00 AM</Text>
+                    <Text style={styles.shiftIcon}>{slot.icon}</Text>
+                    <Text style={[styles.shiftLabel, travelTime === slot.key && styles.shiftLabelActive]}>
+                      {slot.label}
+                    </Text>
+                    <Text style={[styles.shiftTime, travelTime === slot.key && styles.shiftTimeActive]}>
+                      {slot.display}
+                    </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.shiftBtn, travelTime === 'night' && styles.shiftBtnActive]}
-                    onPress={() => setTravelTime('night')}
-                  >
-                    <Text style={styles.shiftIcon}>🌙</Text>
-                    <Text style={[styles.shiftLabel, travelTime === 'night' && styles.shiftLabelActive]}>Night Shift</Text>
-                    <Text style={[styles.shiftTime, travelTime === 'night' && styles.shiftTimeActive]}>8:00 PM</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <TextInput
-                  style={styles.searchValue}
-                  value={travelTime}
-                  onChangeText={setTravelTime}
-                  placeholder="HH:MM (optional)"
-                  placeholderTextColor={theme.muted}
-                  keyboardType="numbers-and-punctuation"
-                />
+                ))}
+              </View>
+              {!travelTime && (
+                <Text style={{ fontSize: 11, color: theme.danger, marginTop: 4 }}>⚠️ Please select a departure shift</Text>
               )}
             </View>
           </View>
 
           <TouchableOpacity
-            style={[styles.searchBtn, ((!fromCity || !toCity) || (isLongHaul && !travelTime)) && { opacity: 0.5 }]}
+            style={[styles.searchBtn, (!fromCity || !toCity || !travelTime) && { opacity: 0.5 }]}
             onPress={handleSearch}
-            disabled={Boolean(!fromCity || !toCity || (isLongHaul && !travelTime))}>
+            disabled={!fromCity || !toCity || !travelTime}>
             <LinearGradient colors={theme.gradientPrimary} style={styles.searchBtnInner}>
               <Text style={styles.searchBtnText}>🔍  {t('home.search_trips')}</Text>
             </LinearGradient>

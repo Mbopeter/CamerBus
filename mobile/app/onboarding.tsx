@@ -31,7 +31,7 @@ export default function OnboardingScreen() {
 
       {/* Flag stripes */}
       <View style={styles.flagStripes}>
-        <View style={[styles.stripe, { backgroundColor: '#007A33' }]} />
+        <View style={[styles.stripe, { backgroundColor: theme.primary }]} />
         <View style={[styles.stripe, { backgroundColor: '#FCD116' }]} />
         <View style={[styles.stripe, { backgroundColor: '#CE1126' }]} />
       </View>

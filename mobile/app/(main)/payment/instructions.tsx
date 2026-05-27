@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Clipboard } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import * as Clipboard from 'expo-clipboard';
 import { useBookingStore } from '../../../store/useBookingStore';
 import { useThemeColor } from '../../../hooks/useThemeColor';
 import { PAYMENT_METHODS } from '../../../constants/data';
@@ -29,14 +30,14 @@ export default function PaymentInstructionsScreen() {
   };
   const details = getPaymentDetails();
 
-  const copyNumber = (num: string) => {
-    Clipboard.setString(num);
+  const copyNumber = async (num: string) => {
+    await Clipboard.setStringAsync(num);
     Alert.alert('Copied!', `${num} copied to clipboard`);
   };
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#007A33','#005522']} style={styles.header}>
+      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
@@ -47,7 +48,7 @@ export default function PaymentInstructionsScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Amount to pay */}
         <View style={styles.amountCard}>
-          <LinearGradient colors={['#007A33','#00A344']} style={styles.amountInner}>
+          <LinearGradient colors={theme.gradientPrimary} style={styles.amountInner}>
             <Text style={styles.amountLabel}>{t('payment.amount_to_pay')}</Text>
             <Text style={styles.amount}>{total.toLocaleString()} XAF</Text>
             <Text style={styles.amountSub}>{selectedSeats.length} seat(s) × {pricePerSeat.toLocaleString()} XAF</Text>
@@ -139,7 +140,7 @@ export default function PaymentInstructionsScreen() {
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.nextBtn} onPress={() => router.push('/(main)/payment/upload-proof')} activeOpacity={0.85}>
-          <LinearGradient colors={['#007A33','#00A344']} style={styles.nextBtnInner}>
+          <LinearGradient colors={theme.gradientPrimary} style={styles.nextBtnInner}>
             <Text style={styles.nextBtnText}>📸 {t('payment.upload_proof')} →</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -161,7 +162,7 @@ const getStyles = (theme: any) => StyleSheet.create({
   amountLabel:     { fontSize: 13, color: 'rgba(255,255,255,0.8)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 },
   amount:          { fontSize: 42, fontWeight: '900', color: '#fff', marginVertical: 8 },
   amountSub:       { fontSize: 13, color: 'rgba(255,255,255,0.75)' },
-  feeBreakdown:    { backgroundColor: '#F0FFF4', borderBottomLeftRadius: 20, borderBottomRightRadius: 20, padding: 16, gap: 0 },
+  feeBreakdown:    { backgroundColor: 'rgba(0,0,0,0.04)', borderBottomLeftRadius: 20, borderBottomRightRadius: 20, padding: 16, gap: 0 },
   feeRow:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
   feeLabel:        { fontSize: 13, color: '#444', fontWeight: '500' },
   feeValue:        { fontSize: 13, color: '#333', fontWeight: '700' },
@@ -170,8 +171,8 @@ const getStyles = (theme: any) => StyleSheet.create({
   platformFeeNote: { fontSize: 11, color: '#856404', opacity: 0.8, marginTop: 2 },
   platformFeeAmount:{ fontSize: 15, fontWeight: '900', color: '#856404' },
   feeDivider:      { height: 1, backgroundColor: '#C3E6CB', marginVertical: 4 },
-  feeTotalLabel:   { fontSize: 14, fontWeight: '800', color: '#007A33' },
-  feeTotalValue:   { fontSize: 16, fontWeight: '900', color: '#007A33' },
+  feeTotalLabel:   { fontSize: 14, fontWeight: '800', color: theme.primary },
+  feeTotalValue:   { fontSize: 16, fontWeight: '900', color: theme.primary },
   payCard:         { backgroundColor: theme.card, borderRadius: 20, padding: 20, shadowColor:'#000', shadowOffset:{width:0,height:4}, shadowOpacity:0.07, shadowRadius:12, elevation:4 },
   payCardTitle:    { fontSize: 16, fontWeight: '800', color: theme.text, marginBottom: 16 },
   payDetail:       { borderBottomWidth: 1, borderBottomColor: theme.border, paddingVertical: 12 },

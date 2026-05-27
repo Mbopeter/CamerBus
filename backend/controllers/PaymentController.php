@@ -32,6 +32,7 @@ class PaymentController
                 ]
             );
             Response::success(['payment_id' => $existing['id']], 'Payment updated');
+            return; // ← CRITICAL: prevent fall-through to INSERT
         }
 
         Database::query(
@@ -95,11 +96,24 @@ class PaymentController
     public static function approve(int $id, array $body): void
     {
         $auth  = AuthMiddleware::handle();
-        RoleMiddleware::requireRole($auth, 'super_admin', 'company_admin');
+        RoleMiddleware::requireRole($auth, 'super_admin', 'company_admin', 'branch_admin');
 
-        $payment = Database::query('SELECT * FROM payments WHERE id = ?', [$id])->fetch();
+        $payment = Database::query(
+            'SELECT p.*, s.origin_branch_id 
+             FROM payments p 
+             JOIN bookings b ON p.booking_id = b.id 
+             JOIN schedules s ON b.schedule_id = s.id 
+             WHERE p.id = ?', 
+            [$id]
+        )->fetch();
+
         if (!$payment) Response::error('Payment not found', 404);
         if ($payment['status'] === 'approved') Response::error('Already approved', 409);
+
+        // Scope check for branch admin
+        if ($auth['role'] === 'branch_admin' && (int)$payment['origin_branch_id'] !== (int)$auth['branch_id']) {
+            Response::error('You can only approve payments for departures from your branch', 403);
+        }
 
         Database::beginTransaction();
         try {
@@ -130,10 +144,22 @@ class PaymentController
     public static function reject(int $id, array $body): void
     {
         $auth = AuthMiddleware::handle();
-        RoleMiddleware::requireRole($auth, 'super_admin', 'company_admin');
+        RoleMiddleware::requireRole($auth, 'super_admin', 'company_admin', 'branch_admin');
 
-        $payment = Database::query('SELECT * FROM payments WHERE id = ?', [$id])->fetch();
+        $payment = Database::query(
+            'SELECT p.*, s.origin_branch_id 
+             FROM payments p 
+             JOIN bookings b ON p.booking_id = b.id 
+             JOIN schedules s ON b.schedule_id = s.id 
+             WHERE p.id = ?', 
+            [$id]
+        )->fetch();
+
         if (!$payment) Response::error('Payment not found', 404);
+
+        if ($auth['role'] === 'branch_admin' && (int)$payment['origin_branch_id'] !== (int)$auth['branch_id']) {
+            Response::error('You can only reject payments for departures from your branch', 403);
+        }
 
         Database::query(
             "UPDATE payments SET status = 'rejected', rejected_reason = ? WHERE id = ?",

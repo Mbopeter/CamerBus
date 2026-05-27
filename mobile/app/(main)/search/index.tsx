@@ -53,7 +53,7 @@ export default function SearchScreen() {
           <Text style={styles.routeArrow}>  ✈️  </Text>
           <Text style={[styles.routeText, { textAlign: 'right' }]} numberOfLines={1}>{toLabel}</Text>
         </View>
-        <Text style={styles.dateText}>📅 {travelDate}</Text>
+        <Text style={styles.dateText}>📅 {travelDate?.length > 10 ? travelDate.slice(0, 10) : travelDate}</Text>
         <Text style={styles.countText}>
           {isLoading ? t('common.loading') : t('search.available', { count: schedules.length })}
         </Text>
@@ -77,10 +77,16 @@ export default function SearchScreen() {
                   <Text style={styles.companyName}>{s.company_name}</Text>
                   <Text style={styles.rating}>⭐ {s.rating}</Text>
                 </View>
-                <View style={[styles.busTypeBadge, s.bus_type === 'VIP' && styles.vipBadge]}>
-                  <Text style={[styles.busTypeText, s.bus_type === 'VIP' && styles.vipText]}>
-                    {s.bus_type}
-                  </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  {/* Bus Signature Badge */}
+                  <View style={styles.sigBadge}>
+                    <Text style={styles.sigText}>{s.bus_signature ?? s.plate_number}</Text>
+                  </View>
+                  <View style={[styles.busTypeBadge, s.bus_type === 'VIP' && styles.vipBadge]}>
+                    <Text style={[styles.busTypeText, s.bus_type === 'VIP' && styles.vipText]}>
+                      {s.bus_type}
+                    </Text>
+                  </View>
                 </View>
               </View>
 
@@ -115,6 +121,8 @@ export default function SearchScreen() {
                   <Text style={[styles.seatsLeft, s.available_seats < 5 && { color: theme.danger }]}>
                     💺 {s.available_seats} {t('schedule.seats_left', { count: s.available_seats })}
                   </Text>
+                  {/* Bus find-at-park indicator */}
+                  <Text style={styles.busLocator}>🏷️ {s.bus_signature ?? s.plate_number}</Text>
                 </View>
                 <TouchableOpacity
                   style={[styles.selectBtn, isFull && styles.selectBtnDisabled]}
@@ -182,6 +190,9 @@ const getStyles = (theme: any) => StyleSheet.create({
   perSeat:        { fontSize: 11, color: theme.muted },
   seatsInfo:      { alignItems: 'center' },
   seatsLeft:      { fontSize: 12, fontWeight: '600', color: theme.success },
+  busLocator:     { fontSize: 11, color: theme.primary, fontWeight: '700', marginTop: 3, letterSpacing: 0.5 },
+  sigBadge:       { backgroundColor: '#1A1F36', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 7 },
+  sigText:        { fontSize: 11, fontWeight: '800', color: '#FCD116', letterSpacing: 1 },
   selectBtn:      { borderRadius: 12, overflow: 'hidden' },
   selectBtnDisabled: {},
   selectBtnInner: { paddingHorizontal: 20, paddingVertical: 12, alignItems: 'center' },

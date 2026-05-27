@@ -177,7 +177,7 @@ CREATE TABLE IF NOT EXISTS `schedules` (
   `travel_date`     DATE NOT NULL,
   `departure_time`  TIME NOT NULL,
   `estimated_arrival_time` TIME,
-  `shift`           ENUM('morning','afternoon','night') NOT NULL DEFAULT 'morning',
+  `shift`           ENUM('day','night') NOT NULL DEFAULT 'day',
   `status`          ENUM('scheduled','boarding','departed','arrived','cancelled') NOT NULL DEFAULT 'scheduled',
   `available_seats` TINYINT UNSIGNED NOT NULL DEFAULT 70,
   `booked_seats`    TINYINT UNSIGNED NOT NULL DEFAULT 0,

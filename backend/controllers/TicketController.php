@@ -8,13 +8,14 @@ class TicketController
         $ticket = Database::query(
             'SELECT t.*,
                 bk.booking_ref, bk.user_id,
+                bs.passenger_name, bs.passenger_id_no, bs.emergency_contact,
                 se.seat_number, se.seat_type,
                 s.travel_date, s.departure_time, s.shift,
                 c.name AS company_name, c.logo_url,
                 oc.name AS origin_city, dc.name AS dest_city,
                 ob.name AS origin_branch, db.name AS dest_branch,
                 b.plate_number, b.bus_type,
-                u.full_name AS passenger_name, u.phone AS passenger_phone
+                u.full_name AS account_name, u.phone AS passenger_phone
              FROM tickets t
              JOIN bookings bk ON t.booking_id = bk.id
              JOIN booking_seats bs ON t.booking_seat_id = bs.id

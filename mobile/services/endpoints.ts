@@ -49,6 +49,7 @@ export const bookingService = {
   getByRef: (ref: string)     => api.get(`/bookings/${ref}`),
   getByUser:(userId: number)  => api.get(`/bookings/user/${userId}`),
   cancel:   (ref: string)     => api.delete(`/bookings/${ref}`),
+  updatePassengerInfo: (ref: string, data: any) => api.put(`/bookings/${ref}/passenger-info`, data),
 };
 
 // ─── Payments ────────────────────────────────────────────────────────────────
@@ -86,12 +87,16 @@ export const notificationService = {
 
 // ─── Admin ───────────────────────────────────────────────────────────────────
 export const adminService = {
-  dashboard:       ()           => api.get('/admin/dashboard'),
-  pendingPayments: ()           => api.get('/admin/payments'),
-  allBookings:     (params?: any) => api.get('/admin/bookings', { params }),
-  allParcels:      (params?: any) => api.get('/admin/parcels',  { params }),
-  createCompany:   (data: any)  => api.post('/admin/companies', data),
-  createBus:       (data: any)  => api.post('/admin/buses', data),
-  createAdmin:     (data: any)  => api.post('/admin/admins', data),
-  listAdmins:      ()           => api.get('/admin/admins'),
+  dashboard:         ()           => api.get('/admin/dashboard'),
+  pendingPayments:   ()           => api.get('/admin/payments'),
+  allBookings:       (params?: any) => api.get('/admin/bookings', { params }),
+  allParcels:        (params?: any) => api.get('/admin/parcels',  { params }),
+  createCompany:     (data: any)  => api.post('/admin/companies', data),
+  // Bus management
+  listBuses:         (companyId?: number) => api.get('/admin/buses', { params: companyId ? { company_id: companyId } : {} }),
+  createBus:         (data: any)  => api.post('/admin/buses', data),
+  markBusFaulty:     (busId: number) => api.put(`/admin/buses/${busId}/faulty`),
+  markBusOperational:(busId: number) => api.put(`/admin/buses/${busId}/operational`),
+  createAdmin:       (data: any)  => api.post('/admin/admins', data),
+  listAdmins:        ()           => api.get('/admin/admins'),
 };
