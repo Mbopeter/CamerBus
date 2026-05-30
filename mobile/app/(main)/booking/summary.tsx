@@ -27,12 +27,12 @@ export default function BookingSummaryScreen() {
   const displayDate = travelDate?.length > 10 ? travelDate.slice(0, 10) : travelDate;
 
   const { mutate: confirmBooking, isPending } = useMutation({
-    mutationFn: () => bookingService.create({
-      schedule_id: selectedSchedule?.id,
-      seat_ids: selectedSeats.map(s => s.id),
-      payment_method: paymentMethod ?? 'mtn_momo',
-      passengers: selectedSeats.map(() => ({ name: user?.full_name })),
-    }),
+   mutationFn: () => bookingService.create({
+  schedule_id: selectedSchedule?.id,
+  seat_ids: selectedSeats.map(s => s.id),
+  payment_method: 'mtn_momo',
+  passengers: selectedSeats.map(() => ({ name: user?.full_name ?? '' })),
+}),
     onSuccess: (res) => {
       const { booking, payment } = res.data.data;
       setBookingRef(booking.booking_ref, payment.id);

@@ -9,6 +9,10 @@ import Companies from './pages/Companies';
 import RoutesPage from './pages/Routes';
 import Buses from './pages/Buses';
 import Approvals from './pages/Approvals';
+import Parcels from './pages/Parcels';
+import Admins from './pages/Admins';
+import Schedules from './pages/Schedules';
+import Bookings from './pages/Bookings';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -31,7 +35,11 @@ createRoot(document.getElementById('root')!).render(
             <Route path="companies" element={<Companies />} />
             <Route path="routes" element={<RoutesPage />} />
             <Route path="buses" element={<Buses />} />
+            <Route path="schedules" element={<Schedules />} />
+            <Route path="bookings" element={<Bookings />} />
             <Route path="approvals" element={<Approvals />} />
+            <Route path="parcels" element={<Parcels />} />
+            <Route path="admins" element={<Admins />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
