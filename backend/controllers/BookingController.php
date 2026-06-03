@@ -8,10 +8,10 @@ class BookingController
         $auth = AuthMiddleware::handle();
         $userId = (int) $auth['sub'];
 
-        $required = ['schedule_id', 'seat_ids'];
-        foreach ($required as $f) {
-            if (empty($body[$f])) Response::error("Field '$f' required", 422);
-        }
+        $body = Validator::validate($body, [
+            'schedule_id' => 'required|numeric',
+            'seat_ids' => 'required|array'
+        ]);
 
         $scheduleId = (int) $body['schedule_id'];
         $seatIds    = (array) $body['seat_ids'];
@@ -217,10 +217,10 @@ class BookingController
             Response::error('Access denied', 403);
         }
 
-        $passengers = $body['passengers'] ?? [];
-        if (empty($passengers) || !is_array($passengers)) {
-            Response::error('Passengers array is required', 422);
-        }
+        $body = Validator::validate($body, [
+            'passengers' => 'required|array'
+        ]);
+        $passengers = $body['passengers'];
 
         Database::beginTransaction();
         try {

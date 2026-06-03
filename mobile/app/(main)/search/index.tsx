@@ -30,7 +30,9 @@ export default function SearchScreen() {
     enabled: !!((fromCity && toCity) || (fromBranch && toBranch)),
   });
 
-  const schedules: any[] = data?.schedules ?? [];
+  const schedules: any[]    = data?.schedules ?? [];
+  const showingNextDay: boolean = data?.showing_next_day ?? false;
+  const displayDate: string = data?.date ?? (travelDate?.slice(0, 10) ?? '');
 
   const handleSelect = (schedule: any) => {
     setSchedule(schedule);
@@ -53,11 +55,22 @@ export default function SearchScreen() {
           <Text style={styles.routeArrow}>  ✈️  </Text>
           <Text style={[styles.routeText, { textAlign: 'right' }]} numberOfLines={1}>{toLabel}</Text>
         </View>
-        <Text style={styles.dateText}>📅 {travelDate?.length > 10 ? travelDate.slice(0, 10) : travelDate}</Text>
+        <Text style={styles.dateText}>📅 {displayDate || (travelDate?.length > 10 ? travelDate.slice(0, 10) : travelDate)}</Text>
         <Text style={styles.countText}>
           {isLoading ? t('common.loading') : t('search.available', { count: schedules.length })}
         </Text>
       </LinearGradient>
+
+      {/* Next-day notice banner */}
+      {showingNextDay && (
+        <View style={styles.nextDayBanner}>
+          <Text style={styles.nextDayIcon}>🌙</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.nextDayTitle}>No more buses today</Text>
+            <Text style={styles.nextDaySubtitle}>Showing next available — {displayDate}</Text>
+          </View>
+        </View>
+      )}
 
       <FlatList
         data={schedules}
@@ -113,7 +126,7 @@ export default function SearchScreen() {
               <View style={styles.cardBottom}>
                 <View>
                   <Text style={styles.price}>
-                    {Number(s.bus_type === 'VIP' ? s.price_vip : s.bus_type === 'Luxury' ? (s.price_luxury ?? s.price_vip) : s.price_standard).toLocaleString()} XAF
+                    {Number(s.flat_price ?? (s.bus_type === 'VIP' ? s.price_vip : s.bus_type === 'Luxury' ? (s.price_luxury ?? s.price_vip) : s.price_standard)).toLocaleString()} XAF
                   </Text>
                   <Text style={styles.perSeat}>per seat</Text>
                 </View>
@@ -200,4 +213,8 @@ const getStyles = (theme: any) => StyleSheet.create({
   empty:          { alignItems: 'center', marginTop: 80, gap: 12 },
   emptyTitle:     { fontSize: 18, fontWeight: '700', color: theme.text, textAlign: 'center' },
   emptySub:       { fontSize: 14, color: theme.muted, textAlign: 'center' },
+  nextDayBanner:  { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#FFF8E1', borderLeftWidth: 4, borderLeftColor: '#F59E0B', margin: 16, marginBottom: 0, padding: 14, borderRadius: 12 },
+  nextDayIcon:    { fontSize: 24 },
+  nextDayTitle:   { fontSize: 14, fontWeight: '800', color: '#92400E' },
+  nextDaySubtitle:{ fontSize: 12, color: '#B45309', marginTop: 2 },
 });

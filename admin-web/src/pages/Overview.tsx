@@ -18,8 +18,8 @@ export default function Overview() {
   const stats = data?.stats || {};
 
   const statCards = [
-    { title: 'Total Revenue',      value: `${(stats.total_revenue || 0).toLocaleString()} XAF`,   icon: DollarSign,    color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)',  show: true },
-    { title: "Today's Revenue",    value: `${(stats.today_revenue || 0).toLocaleString()} XAF`,   icon: TrendingUp,    color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)',  show: true },
+    { title: 'Total Revenue',      value: `${(stats.total_revenue || 0).toLocaleString()} XAF`,   icon: DollarSign,    color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)',  show: admin?.role !== 'super_admin' },
+    { title: "Today's Revenue",    value: `${(stats.today_revenue || 0).toLocaleString()} XAF`,   icon: TrendingUp,    color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)',  show: admin?.role !== 'super_admin' },
     { title: 'Total Bookings',     value: stats.total_bookings || 0,                               icon: Ticket,        color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.1)',  show: true },
     { title: 'Pending Approvals',  value: stats.pending_payments || 0,                             icon: Clock,         color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)',  show: true, alert: (stats.pending_payments || 0) > 0, link: '/approvals' },
     { title: 'Active Schedules',   value: stats.active_schedules || 0,                             icon: CalendarDays,  color: '#EC4899', bg: 'rgba(236, 72, 153, 0.1)',  show: true },

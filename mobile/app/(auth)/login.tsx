@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
-  ScrollView, KeyboardAvoidingView, Platform, Dimensions, Alert,
+  ScrollView, KeyboardAvoidingView, Platform, Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useLanguageStore } from '../../store/useLanguageStore';
 import { useThemeColor } from '../../hooks/useThemeColor';
 import Toast from 'react-native-toast-message';
 
@@ -16,6 +17,7 @@ export default function LoginScreen() {
   const { t }    = useTranslation();
   const router   = useRouter();
   const { login, isLoading } = useAuthStore();
+  const { language } = useLanguageStore();
   const theme = useThemeColor();
   const styles = getStyles(theme);
   const [phone, setPhone]    = useState('');
@@ -41,6 +43,13 @@ export default function LoginScreen() {
         <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
           <View style={styles.circle1} />
           <View style={styles.circle2} />
+          {/* Language switcher */}
+          <TouchableOpacity style={styles.langSwitch} onPress={() => router.replace('/onboarding')}>
+            <Text style={styles.langSwitchText}>
+              {language === 'fr' ? '🇫🇷 Français' : '🇬🇧 English'}
+            </Text>
+            <Text style={styles.langSwitchArrow}>⇄</Text>
+          </TouchableOpacity>
           <Text style={styles.logo}>🚌 CamerBus</Text>
           <Text style={styles.title}>{t('auth.welcome_back')}</Text>
           <Text style={styles.subtitle}>{t('auth.login_subtitle')}</Text>
@@ -111,6 +120,9 @@ const getStyles = (theme: any) => StyleSheet.create({
   header:       { paddingTop: 70, paddingBottom: 50, paddingHorizontal: 28, position: 'relative', overflow: 'hidden' },
   circle1:      { position:'absolute', width:200, height:200, borderRadius:100, backgroundColor:'rgba(255,255,255,0.06)', top:-60, right:-60 },
   circle2:      { position:'absolute', width:140, height:140, borderRadius:70, backgroundColor:'rgba(252,209,22,0.08)', bottom:-40, left:-20 },
+  langSwitch:   { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-end', backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
+  langSwitchText:{ fontSize: 13, color: '#fff', fontWeight: '600' },
+  langSwitchArrow:{ fontSize: 15, color: 'rgba(255,255,255,0.8)' },
   logo:         { fontSize: 22, color: '#fff', fontWeight: '700', marginBottom: 16 },
   title:        { fontSize: 32, fontWeight: '800', color: '#fff', marginBottom: 6 },
   subtitle:     { fontSize: 15, color: 'rgba(255,255,255,0.75)' },

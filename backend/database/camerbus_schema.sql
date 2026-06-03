@@ -71,6 +71,10 @@ CREATE TABLE IF NOT EXISTS `companies` (
   `total_reviews`   INT UNSIGNED DEFAULT 0,
   `is_active`       TINYINT(1) NOT NULL DEFAULT 1,
   `is_verified`     TINYINT(1) NOT NULL DEFAULT 1,
+  -- Bus fleet class: 'vip' companies ONLY operate VIP/Luxury buses,
+  -- 'standard' companies ONLY operate Standard/Coaster/Minibus buses.
+  -- This prevents mixing bus classes within one company.
+  `company_class`   ENUM('vip','standard') NOT NULL DEFAULT 'standard',
   -- Payment Details
   `mtn_name`        VARCHAR(150),
   `mtn_number`      VARCHAR(25),
@@ -83,7 +87,8 @@ CREATE TABLE IF NOT EXISTS `companies` (
   `updated_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at`      TIMESTAMP NULL DEFAULT NULL,
   INDEX `idx_companies_active` (`is_active`),
-  INDEX `idx_companies_slug` (`slug`)
+  INDEX `idx_companies_slug` (`slug`),
+  INDEX `idx_companies_class` (`company_class`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -131,6 +136,7 @@ CREATE TABLE IF NOT EXISTS `buses` (
   `company_id`      BIGINT UNSIGNED NOT NULL,
   `branch_id`       BIGINT UNSIGNED NULL,
   `plate_number`    VARCHAR(20) NOT NULL UNIQUE,
+  `bus_signature`   VARCHAR(50) NULL,
   `name`            VARCHAR(100),
   `bus_type`        ENUM('VIP','Standard','Luxury','Coaster','Minibus') NOT NULL DEFAULT 'Standard',
   `total_seats`     TINYINT UNSIGNED NOT NULL DEFAULT 70,

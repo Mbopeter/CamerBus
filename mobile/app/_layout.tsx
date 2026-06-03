@@ -31,6 +31,7 @@ export default function RootLayout() {
           <StatusBar style="light" backgroundColor={theme.primary} />
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.background } }}>
             <Stack.Screen name="index" />
+            <Stack.Screen name="onboarding" />
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(main)" />
           </Stack>

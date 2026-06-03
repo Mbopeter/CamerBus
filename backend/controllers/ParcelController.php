@@ -7,11 +7,16 @@ class ParcelController
     {
         $auth = AuthMiddleware::optional();
 
-        $required = ['sender_name','sender_phone','receiver_name','receiver_phone',
-                     'origin_branch_id','dest_branch_id','company_id','description'];
-        foreach ($required as $f) {
-            if (empty($body[$f])) Response::error("Field '$f' required", 422);
-        }
+        $body = Validator::validate($body, [
+            'sender_name' => 'required',
+            'sender_phone' => 'required',
+            'receiver_name' => 'required',
+            'receiver_phone' => 'required',
+            'origin_branch_id' => 'required|numeric',
+            'dest_branch_id' => 'required|numeric',
+            'company_id' => 'required|numeric',
+            'description' => 'required'
+        ]);
 
         $originBranchId = (int) $body['origin_branch_id'];
         $destBranchId   = (int) $body['dest_branch_id'];
@@ -146,7 +151,7 @@ class ParcelController
     public static function updateStatus(int $id, array $body): void
     {
         $auth = AuthMiddleware::handle();
-        RoleMiddleware::requireRole($auth, 'super_admin', 'company_admin', 'branch_admin');
+        RoleMiddleware::requireRole($auth, 'company_admin', 'branch_admin');
 
         $validStatuses = ['received','in_transit','arrived','ready_for_pickup','collected','returned'];
         if (!in_array($body['status'] ?? '', $validStatuses, true)) {

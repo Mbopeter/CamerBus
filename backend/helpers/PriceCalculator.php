@@ -44,9 +44,14 @@ class PriceCalculator
         '10-5'=> 60,  '5-10'=> 60,
     ];
 
+    /**
+     * Calculate all price tiers for a route.
+     * Returns standard, vip, luxury prices plus
+     * a pre-computed 'price' field for the given busType.
+     */
     public static function calculate(int $originCityId, int $destCityId, string $busType = 'Standard'): array
     {
-        $key = "$originCityId-$destCityId";
+        $key       = "$originCityId-$destCityId";
         $basePrice = self::$knownRoutes[$key] ?? self::estimate($originCityId, $destCityId);
 
         $vipMultiplier     = 1.30;
@@ -69,12 +74,45 @@ class PriceCalculator
         ];
     }
 
+    /**
+     * Resolve a SINGLE flat price for a bus based on its bus_type.
+     *
+     * Business rule:
+     *   VIP / Luxury bus     → price_vip
+     *   Standard bus         → price_standard
+     *   Coaster / Minibus    → price_standard  (same tier as standard)
+     *
+     * There must NEVER be more than one price on a single bus.
+     * Call this instead of exposing both price_standard and price_vip to the client.
+     */
+    public static function resolvePrice(
+        string $busType,
+        float  $priceStandard,
+        float  $priceVip,
+        float  $priceLuxury = 0.0
+    ): float {
+        return match (true) {
+            $busType === 'Luxury'                     => $priceLuxury > 0 ? $priceLuxury : $priceVip,
+            in_array($busType, ['VIP', 'Luxury'], true) => $priceVip,
+            default                                   => $priceStandard,
+        };
+    }
+
+    /**
+     * Returns which seat_type label corresponds to a bus_type.
+     * Keeps the PHP side consistent with SeatController.
+     */
+    public static function seatTypeForBus(string $busType): string
+    {
+        return in_array($busType, ['VIP', 'Luxury'], true) ? 'vip' : 'standard';
+    }
+
     private static function estimate(int $from, int $to): int
     {
-        $key = "$from-$to";
+        $key  = "$from-$to";
         $dist = self::$distances[$key] ?? 200;
-        // XAF 15/km + road condition factor (assume 1.1 for unlisted)
-        $raw = (int)($dist * 15 * 1.1);
+        // XAF 15/km + road condition factor (1.1 for unlisted routes)
+        $raw  = (int)($dist * 15 * 1.1);
         return self::roundTo500($raw);
     }
 

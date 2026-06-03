@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 
-// Assuming backend runs on 8000 locally
-const API_URL = 'http://localhost:8000/api';
+// Backend runs on PHP built-in server: php -S 0.0.0.0:8000
+// Change to your Apache/production URL when deploying
+export const BASE_URL = 'http://localhost:8000';
+const API_URL = `${BASE_URL}/api`;
 
 export const api = axios.create({
   baseURL: API_URL,

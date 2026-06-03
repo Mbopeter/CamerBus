@@ -58,10 +58,10 @@ class CompanyController
         $auth = AuthMiddleware::handle();
         RoleMiddleware::requireRole($auth, 'super_admin');
 
-        $required = ['name', 'slug'];
-        foreach ($required as $f) {
-            if (empty($body[$f])) Response::error("Field '$f' required", 422);
-        }
+        $body = Validator::validate($body, [
+            'name' => 'required',
+            'slug' => 'required'
+        ]);
 
         Database::query(
             'INSERT INTO companies (name, slug, description, hq_city, phone, email,

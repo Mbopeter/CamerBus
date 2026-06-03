@@ -17,6 +17,8 @@ CorsMiddleware::handle();
 
 // Autoload helpers
 require_once ROOT_PATH . '/helpers/Response.php';
+require_once ROOT_PATH . '/helpers/Validator.php';
+require_once ROOT_PATH . '/helpers/Router.php';
 require_once ROOT_PATH . '/config/database.php';
 require_once ROOT_PATH . '/config/jwt.php';
 

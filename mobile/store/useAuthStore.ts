@@ -64,7 +64,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
-    await AsyncStorage.multiRemove(['@camerbus_user','@camerbus_access_token','@camerbus_refresh_token']);
+    await AsyncStorage.multiRemove([
+      '@camerbus_user',
+      '@camerbus_access_token',
+      '@camerbus_refresh_token',
+      '@camerbus_language',         // reset language so picker shows again on next open
+    ]);
     set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false });
   },
 

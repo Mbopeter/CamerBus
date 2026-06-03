@@ -7,10 +7,10 @@ class PaymentController
     {
         $auth = AuthMiddleware::handle();
 
-        $required = ['booking_id', 'method'];
-        foreach ($required as $f) {
-            if (empty($body[$f])) Response::error("Field '$f' required", 422);
-        }
+        $body = Validator::validate($body, [
+            'booking_id' => 'required|numeric',
+            'method' => 'required'
+        ]);
 
         $bookingId = (int) $body['booking_id'];
         $booking   = Database::query('SELECT * FROM bookings WHERE id = ?', [$bookingId])->fetch();
@@ -96,7 +96,7 @@ class PaymentController
     public static function approve(int $id, array $body): void
     {
         $auth  = AuthMiddleware::handle();
-        RoleMiddleware::requireRole($auth, 'super_admin', 'company_admin', 'branch_admin');
+        RoleMiddleware::requireRole($auth, 'company_admin', 'branch_admin');
 
         $payment = Database::query(
             'SELECT p.*, s.origin_branch_id 
@@ -144,7 +144,7 @@ class PaymentController
     public static function reject(int $id, array $body): void
     {
         $auth = AuthMiddleware::handle();
-        RoleMiddleware::requireRole($auth, 'super_admin', 'company_admin', 'branch_admin');
+        RoleMiddleware::requireRole($auth, 'company_admin', 'branch_admin');
 
         $payment = Database::query(
             'SELECT p.*, s.origin_branch_id 

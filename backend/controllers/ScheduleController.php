@@ -33,10 +33,15 @@ class ScheduleController
         $auth = AuthMiddleware::handle();
         RoleMiddleware::requireRole($auth, 'super_admin', 'company_admin');
 
-        $required = ['route_id', 'bus_id', 'origin_branch_id', 'dest_branch_id', 'travel_date', 'departure_time', 'shift'];
-        foreach ($required as $f) {
-            if (empty($body[$f])) Response::error("Field '$f' required", 422);
-        }
+        $body = Validator::validate($body, [
+            'route_id' => 'required|numeric',
+            'bus_id' => 'required|numeric',
+            'origin_branch_id' => 'required|numeric',
+            'dest_branch_id' => 'required|numeric',
+            'travel_date' => 'required',
+            'departure_time' => 'required',
+            'shift' => 'required'
+        ]);
 
         // Get bus seat count for available_seats
         $bus = Database::query('SELECT total_seats FROM buses WHERE id = ?', [$body['bus_id']])->fetch();

@@ -5,10 +5,11 @@ class AuthController
 {
     public static function register(array $body): void
     {
-        $required = ['full_name', 'phone', 'password'];
-        foreach ($required as $field) {
-            if (empty($body[$field])) Response::error("Field '$field' is required", 422);
-        }
+        $body = Validator::validate($body, [
+            'full_name' => 'required',
+            'phone'     => 'required',
+            'password'  => 'required|min:6'
+        ]);
 
         $phone = trim($body['phone']);
         $existing = Database::query('SELECT id FROM users WHERE phone = ? AND deleted_at IS NULL', [$phone])->fetch();
@@ -29,9 +30,10 @@ class AuthController
 
     public static function login(array $body): void
     {
-        if (empty($body['phone']) || empty($body['password'])) {
-            Response::error('Phone and password are required', 422);
-        }
+        $body = Validator::validate($body, [
+            'phone'    => 'required',
+            'password' => 'required'
+        ]);
 
         $user = Database::query(
             'SELECT * FROM users WHERE phone = ? AND deleted_at IS NULL AND is_active = 1',
@@ -54,9 +56,10 @@ class AuthController
 
     public static function adminLogin(array $body): void
     {
-        if (empty($body['email']) || empty($body['password'])) {
-            Response::error('Email and password are required', 422);
-        }
+        $body = Validator::validate($body, [
+            'email'    => 'required|email',
+            'password' => 'required'
+        ]);
 
         $admin = Database::query(
             'SELECT * FROM admins WHERE email = ? AND deleted_at IS NULL AND is_active = 1',
@@ -76,7 +79,9 @@ class AuthController
 
     public static function refresh(array $body): void
     {
-        if (empty($body['refresh_token'])) Response::error('Refresh token required', 422);
+        $body = Validator::validate($body, [
+            'refresh_token' => 'required'
+        ]);
         try {
             $payload = JWT::decode($body['refresh_token']);
             if (($payload['type'] ?? '') !== 'refresh') Response::error('Invalid token type', 401);

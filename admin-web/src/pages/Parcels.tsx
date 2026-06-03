@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { Package, Search, Truck, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { useAuthStore } from '../store/useAuthStore';
 
 export default function Parcels() {
+  const { admin } = useAuthStore();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -83,7 +85,7 @@ export default function Parcels() {
                   <th>Weight</th>
                   <th>Price</th>
                   <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Update Status</th>
+                  {admin?.role !== 'super_admin' && <th style={{ textAlign: 'right' }}>Update Status</th>}
                 </tr>
               </thead>
               <tbody>
@@ -114,29 +116,35 @@ export default function Parcels() {
                         <span style={{ fontSize: '0.875rem' }}>{parcel.weight_kg ? `${parcel.weight_kg} kg` : '—'}</span>
                       </td>
                       <td>
-                        <span style={{ fontWeight: 600, color: 'var(--status-success)' }}>
-                          {parcel.price ? `${Number(parcel.price).toLocaleString()} XAF` : '—'}
-                        </span>
+                        {admin?.role !== 'super_admin' ? (
+                          <span style={{ fontWeight: 600, color: 'var(--status-success)' }}>
+                            {parcel.price ? `${Number(parcel.price).toLocaleString()} XAF` : '—'}
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>Hidden</span>
+                        )}
                       </td>
                       <td>
                         <span className={`badge ${cfg.badge}`} style={{ display: 'inline-flex', gap: '0.25rem' }}>
                           <Icon size={11} /> {cfg.label}
                         </span>
                       </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <select
-                          className="input-field"
-                          style={{ marginBottom: 0, width: '140px', padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
-                          value={parcel.status}
-                          onChange={e => {
-                            if (window.confirm(`Change status to "${e.target.value}"?`)) {
-                              updateStatus({ id: parcel.id, status: e.target.value });
-                            }
-                          }}
-                        >
-                          {statusOptions.map(s => <option key={s} value={s}>{statusConfig[s]?.label || s}</option>)}
-                        </select>
-                      </td>
+                      {admin?.role !== 'super_admin' && (
+                        <td style={{ textAlign: 'right' }}>
+                          <select
+                            className="input-field"
+                            style={{ marginBottom: 0, width: '140px', padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
+                            value={parcel.status}
+                            onChange={e => {
+                              if (window.confirm(`Change status to "${e.target.value}"?`)) {
+                                updateStatus({ id: parcel.id, status: e.target.value });
+                              }
+                            }}
+                          >
+                            {statusOptions.map(s => <option key={s} value={s}>{statusConfig[s]?.label || s}</option>)}
+                          </select>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}

@@ -61,9 +61,18 @@ class RouteController
         // 2. Lazy-generate schedules (ensures buses are always available)
         if ($resolvedOriginCityId && $resolvedDestCityId) {
             self::autoSeedAllCompaniesForRoute($resolvedOriginCityId, $resolvedDestCityId);
+
+            // Generate schedules for the requested date
             self::generateMissingSchedules(
                 $resolvedOriginCityId, $resolvedDestCityId,
                 $companyId, $date, $originBranchId, $destBranchId
+            );
+
+            // Also generate tomorrow's schedules proactively so "next available" is always ready
+            $tomorrow = date('Y-m-d', strtotime($date . ' +1 day'));
+            self::generateMissingSchedules(
+                $resolvedOriginCityId, $resolvedDestCityId,
+                $companyId, $tomorrow, $originBranchId, $destBranchId
             );
         }
 
@@ -88,7 +97,7 @@ class RouteController
                 JOIN branches db   ON s.dest_branch_id = db.id
                 JOIN buses b       ON s.bus_id = b.id
                 WHERE s.travel_date = ?
-                  AND s.status NOT IN (\'cancelled\', \'arrived\', \'departed\')
+                  AND s.status NOT IN (\'cancelled\', \'arrived\', \'departed\', \'completed\')
                   AND s.available_seats > 0
                   AND c.is_active = 1
                   AND b.is_active = 1
@@ -127,11 +136,46 @@ class RouteController
         $sql .= ' ORDER BY s.departure_time ASC';
         $schedules = Database::query($sql, $params)->fetchAll();
 
+        // ── NEXT-DAY FALLBACK ────────────────────────────────────────────────
+        // If no schedules remain for today (all times passed), automatically
+        // show tomorrow's schedule so the user always sees the next available bus.
+        $showingNextDay = false;
+        if (empty($schedules) && $date === date('Y-m-d') && !$shiftFilter && !$timeFilter) {
+            $tomorrow      = date('Y-m-d', strtotime('+1 day'));
+            $tomorrowParams = [$tomorrow];
+            $tomorrowSql   = str_replace(
+                'WHERE s.travel_date = ?',
+                'WHERE s.travel_date = ?',
+                $sql
+            );
+            // Replace the date param and remove the departure_time past-filter
+            $tomorrowSql   = preg_replace(
+                '/AND s\.departure_time > DATE_ADD\(NOW\(\), INTERVAL -\d+ MINUTE\)/',
+                '',
+                $sql
+            );
+            if ($fromCity && $toCity) {
+                $tomorrowParams[] = $resolvedOriginCityId;
+                $tomorrowParams[] = $resolvedDestCityId;
+            }
+            $schedules    = Database::query($tomorrowSql, $tomorrowParams)->fetchAll();
+            $date          = $tomorrow; // update for response
+            $showingNextDay = true;
+        }
+
         foreach ($schedules as &$s) {
-            $s['amenities']     = $s['amenities'] ? json_decode($s['amenities'], true) : [];
-            $s['is_faulty']     = (bool) ($s['is_faulty'] ?? false);
+            $s['amenities']      = $s['amenities'] ? json_decode($s['amenities'], true) : [];
+            $s['is_faulty']      = (bool) ($s['is_faulty'] ?? false);
             // Expose a display-friendly bus signature (fallback to plate)
             $s['bus_display_id'] = $s['bus_signature'] ?? $s['plate_number'];
+            // Single flat price per schedule — driven by bus_type, not per-seat.
+            // Clients must use this field; price_standard/price_vip are for admin reference only.
+            $s['flat_price'] = PriceCalculator::resolvePrice(
+                $s['bus_type'],
+                (float) $s['price_standard'],
+                (float) $s['price_vip'],
+                (float) ($s['price_luxury'] ?? $s['price_vip'])
+            );
         }
 
         if (!isset($originCity) || !$originCity) {
@@ -149,6 +193,7 @@ class RouteController
             'origin_city'      => $originCity ?? null,
             'destination_city' => $destCity ?? null,
             'date'             => $date,
+            'showing_next_day' => $showingNextDay,   // true when we auto-fell back to tomorrow
             'schedules'        => $schedules,
             'count'            => count($schedules),
         ]);
@@ -183,7 +228,22 @@ class RouteController
             $compId    = (int) $route['company_id'];
 
             // Universal fixed shifts: 10am Day and 8pm Night
-            $times = ['10:00:00', '20:00:00'];
+            $allTimes = ['10:00:00', '20:00:00'];
+
+            // If generating for TODAY, skip time slots that have already passed
+            // (keep a 15-minute booking window so passengers aren't cut off instantly)
+            $times = [];
+            $isToday = ($date === date('Y-m-d'));
+            foreach ($allTimes as $t) {
+                if ($isToday) {
+                    $slotTs   = strtotime("$date $t");
+                    $cutoffTs = time() - (15 * 60); // 15 min grace window
+                    if ($slotTs < $cutoffTs) {
+                        continue; // This slot has passed — skip it
+                    }
+                }
+                $times[] = $t;
+            }
 
             // Resolve branches
             $obId = self::resolveBranch($reqOriginBranchId, $compId, $originCityId);
@@ -212,7 +272,7 @@ class RouteController
                      WHERE s.route_id = ? AND s.travel_date = ?
                        AND s.departure_time = ?
                        AND s.origin_branch_id = ? AND s.dest_branch_id = ?
-                       AND s.status NOT IN (\'cancelled\')
+                       AND s.status NOT IN ("cancelled", "completed")
                        AND b.is_faulty = 0',
                     [$route['id'], $date, $time, $obId, $dbId]
                 )->fetch();
@@ -244,7 +304,7 @@ class RouteController
                        (route_id, bus_id, origin_branch_id, dest_branch_id,
                         travel_date, departure_time, estimated_arrival_time,
                         shift, available_seats, status)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, \'scheduled\')',
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, "scheduled")',
                     [
                         $route['id'], $bus['id'], $obId, $dbId,
                         $date, $time, $arrTime,
@@ -279,6 +339,19 @@ class RouteController
 
     public static function byCompany(int $companyId): void
     {
+        // Security override: prevent company admin from accessing someone else's routes
+        try {
+            $auth = AuthMiddleware::handle();
+            if ($auth['role'] === 'company_admin') {
+                $companyId = (int) $auth['company_id'];
+            }
+        } catch (Exception $e) {
+            // Unauthenticated users (e.g. mobile app) can still view routes by company, 
+            // so we ignore auth errors here but enforce it if they are logged in as admin.
+            // Wait, this endpoint is used by admin and mobile. Actually, the frontend admin uses it.
+            // If they are authenticated as company_admin, we restrict.
+        }
+
         $routes = Database::query(
             'SELECT r.*, oc.name AS origin_city, dc.name AS dest_city
              FROM routes r
@@ -322,9 +395,13 @@ class RouteController
             // 3. Ensure company has at least one bus
             $bus = Database::query('SELECT id FROM buses WHERE company_id = ? AND is_active = 1 AND is_faulty = 0 LIMIT 1', [$compId])->fetch();
             if (!$bus) {
+                // Respect company_class: VIP companies get VIP buses, standard companies get Standard buses.
+                // NEVER mix bus types — one company = one class.
+                $compClass = Database::query('SELECT company_class FROM companies WHERE id = ?', [$compId])->fetch();
+                $autoType  = ($compClass && $compClass['company_class'] === 'vip') ? 'VIP' : 'Standard';
                 Database::query(
                     'INSERT INTO buses (company_id, plate_number, name, bus_type, total_seats, is_active) VALUES (?, ?, ?, ?, ?, 1)',
-                    [$compId, 'CE-' . rand(1000, 9999) . '-' . chr(rand(65,90)), "$compName Express", 'VIP', 70]
+                    [$compId, 'CE-' . rand(1000, 9999) . '-' . chr(rand(65,90)), "$compName Express", $autoType, 70]
                 );
             }
             

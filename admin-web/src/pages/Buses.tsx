@@ -14,8 +14,8 @@ export default function Buses() {
     company_id: admin?.company_id || '', 
     plate_number: '', 
     name: '', 
-    bus_type: 'VIP', 
-    total_seats: 50 
+    bus_type: '', 
+    total_seats: 70 
   });
 
   const { data: buses = [], isLoading } = useQuery({
@@ -34,7 +34,10 @@ export default function Buses() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['buses'] });
       setIsModalOpen(false);
-      setNewBus({ company_id: admin?.company_id || '', plate_number: '', name: '', bus_type: 'VIP', total_seats: 50 });
+      setNewBus({ company_id: admin?.company_id || '', plate_number: '', name: '', bus_type: '', total_seats: 70 });
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.message || 'Failed to create bus');
     }
   });
 
@@ -193,7 +196,20 @@ export default function Buses() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="input-group">
                     <label className="input-label">Bus Type *</label>
-                    <select className="input-field" required value={newBus.bus_type} onChange={e => setNewBus({...newBus, bus_type: e.target.value})}>
+                    <select 
+                      className="input-field" 
+                      required 
+                      value={newBus.bus_type} 
+                      onChange={e => {
+                        const type = e.target.value;
+                        let defaultSeats = 70;
+                        if (['VIP', 'Luxury'].includes(type)) defaultSeats = 30;
+                        else if (type === 'Coaster') defaultSeats = 30;
+                        else if (type === 'Minibus') defaultSeats = 15;
+                        setNewBus({...newBus, bus_type: type, total_seats: defaultSeats});
+                      }}
+                    >
+                      <option value="" disabled>Select Bus Type</option>
                       <option value="Standard">Standard</option>
                       <option value="VIP">VIP</option>
                       <option value="Luxury">Luxury</option>

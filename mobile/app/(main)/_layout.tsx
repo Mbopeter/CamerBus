@@ -62,6 +62,7 @@ export default function MainLayout() {
       <Tabs.Screen name="payment/upload-proof"     options={{ href: null }} />
       <Tabs.Screen name="payment/pending"          options={{ href: null }} />
       <Tabs.Screen name="tickets/[code]"           options={{ href: null }} />
+      <Tabs.Screen name="tickets/passenger-info"   options={{ href: null }} />
       <Tabs.Screen name="parcels/send"             options={{ href: null }} />
       <Tabs.Screen name="parcels/track"            options={{ href: null }} />
       <Tabs.Screen name="tracking/[id]"            options={{ href: null }} />

@@ -5,14 +5,28 @@ class SeatController
 {
     public static function bySchedule(int $scheduleId): void
     {
-        // Get schedule + bus info
+        // Get schedule + bus info (including company_class for pricing context)
         $schedule = Database::query(
-            'SELECT s.id, s.bus_id, b.total_seats, b.bus_type
-             FROM schedules s JOIN buses b ON s.bus_id = b.id
+            'SELECT s.id, s.bus_id, b.total_seats, b.bus_type,
+                    r.price_standard, r.price_vip, r.price_luxury,
+                    c.company_class
+             FROM schedules s
+             JOIN buses b     ON s.bus_id   = b.id
+             JOIN routes r    ON s.route_id = r.id
+             JOIN companies c ON r.company_id = c.id
              WHERE s.id = ?', [$scheduleId]
         )->fetch();
 
         if (!$schedule) Response::error('Schedule not found', 404);
+
+        // Resolve the single flat price for this bus based on its type.
+        // A bus has ONE price — no seat-level price mixing.
+        $flatPrice = PriceCalculator::resolvePrice(
+            $schedule['bus_type'],
+            (float) $schedule['price_standard'],
+            (float) $schedule['price_vip'],
+            (float) ($schedule['price_luxury'] ?? $schedule['price_vip'])
+        );
 
         // Get all seats for this bus
         $seats = Database::query(
@@ -30,40 +44,77 @@ class SeatController
             [$scheduleId, $schedule['bus_id']]
         )->fetchAll();
 
-        // If no seats configured yet, generate default layout
+        // If no seats configured yet, generate uniform layout based on bus_type
         if (empty($seats)) {
-            $seats = self::generateDefaultLayout($schedule['bus_id'], $schedule['total_seats']);
+            $seats = self::generateDefaultLayout(
+                $schedule['bus_id'],
+                $schedule['total_seats'],
+                $schedule['bus_type']
+            );
+        } else {
+            // Ensure any previously-generated seats have the correct type
+            // (fixes legacy rows with mixed vip/standard on one bus)
+            $correctType = self::seatTypeForBus($schedule['bus_type']);
+            foreach ($seats as &$seat) {
+                if ($seat['seat_type'] !== 'driver') {
+                    $seat['seat_type'] = $correctType;
+                }
+            }
+            unset($seat);
         }
 
         Response::success([
-            'schedule_id' => $scheduleId,
-            'bus_id'      => $schedule['bus_id'],
-            'bus_type'    => $schedule['bus_type'],
-            'total_seats' => $schedule['total_seats'],
-            'seats'       => $seats,
+            'schedule_id'   => $scheduleId,
+            'bus_id'        => $schedule['bus_id'],
+            'bus_type'      => $schedule['bus_type'],
+            'company_class' => $schedule['company_class'],
+            'total_seats'   => $schedule['total_seats'],
+            // Single flat price — the same for every seat on this bus
+            'flat_price'    => $flatPrice,
+            'seats'         => $seats,
         ]);
     }
 
-    private static function generateDefaultLayout(int $busId, int $totalSeats): array
+    /**
+     * Returns the correct seat_type string for a given bus_type.
+     * VIP/Luxury buses → 'vip'
+     * Standard/Coaster/Minibus → 'standard'
+     */
+    private static function seatTypeForBus(string $busType): string
     {
-        // Auto-generate and persist seat layout numbered 1 to 70
-        $layout = [
-            0  => 2,  // Driver row: 2 passenger seats on right
-            1  => 5,
-            2  => 5,
-            3  => 5,
-            4  => 3,  // Door row: 3 left seats, DOOR on right
-            5  => 5,
-            6  => 5,
-            7  => 5,
-            8  => 5,
-            9  => 5,
-            10 => 5,
-            11 => 5,
-            12 => 3,  // Door row: 3 left seats, DOOR on right
-            13 => 5,
-            14 => 7,  // Back row: 7 seats
-        ];
+        return in_array($busType, ['VIP', 'Luxury'], true) ? 'vip' : 'standard';
+    }
+
+    private static function generateDefaultLayout(int $busId, int $totalSeats, string $busType): array
+    {
+        // ALL seats on this bus share the same type — driven by bus_type only.
+        // No row-based mixing. A Standard bus never has VIP seats.
+        $uniformSeatType = self::seatTypeForBus($busType);
+
+        $layout = [];
+
+        if (in_array($busType, ['VIP', 'Luxury'], true)) {
+            // VIP/Luxury: 3 seats per row (1 left, aisle, 2 right)
+            $layout[0] = 1; // driver row passenger
+            for ($r = 1; $r <= 30; $r++) {
+                if ($r === 4 || $r === 12) $layout[$r] = 2; // door row
+                else $layout[$r] = 3;
+            }
+        } elseif (in_array($busType, ['Coaster', 'Minibus'], true)) {
+            // Coaster/Minibus: 4 seats per row (2 left, aisle, 2 right)
+            $layout[0] = 2; // driver row passengers
+            for ($r = 1; $r <= 30; $r++) {
+                if ($r === 4 || $r === 12) $layout[$r] = 2; // door row
+                else $layout[$r] = 4;
+            }
+        } else {
+            // Standard: 5 seats per row (3 left, aisle, 2 right)
+            $layout[0] = 2; // driver row passengers
+            for ($r = 1; $r <= 30; $r++) {
+                if ($r === 4 || $r === 12) $layout[$r] = 3; // door row
+                else $layout[$r] = 5;
+            }
+        }
 
         $seats   = [];
         $seatNum = 1;
@@ -72,20 +123,25 @@ class SeatController
             for ($i = 1; $i <= $count; $i++) {
                 if ($seatNum > $totalSeats) break 2;
 
-                $seatType = ($row <= 3 && $row > 0) ? 'vip' : 'standard';
-
                 $existing = Database::query(
-                    'SELECT id FROM seats WHERE bus_id = ? AND seat_number = ?', [$busId, (string)$seatNum]
+                    'SELECT id FROM seats WHERE bus_id = ? AND seat_number = ?',
+                    [$busId, (string)$seatNum]
                 )->fetch();
 
                 if (!$existing) {
                     Database::query(
-                        'INSERT INTO seats (bus_id, seat_number, row_number, seat_position, seat_type) VALUES (?,?,?,?,?)',
-                        [$busId, (string)$seatNum, $row, 'standard', $seatType]
+                        'INSERT INTO seats (bus_id, seat_number, row_number, seat_position, seat_type)
+                         VALUES (?,?,?,?,?)',
+                        [$busId, (string)$seatNum, $row, 'window_left', $uniformSeatType]
                     );
                     $id = (int) Database::lastInsertId();
                 } else {
                     $id = $existing['id'];
+                    // Correct any legacy wrong seat_type in the DB
+                    Database::query(
+                        'UPDATE seats SET seat_type = ? WHERE id = ? AND seat_type != ?',
+                        [$uniformSeatType, $id, $uniformSeatType]
+                    );
                 }
 
                 $seats[] = [
@@ -93,8 +149,8 @@ class SeatController
                     'bus_id'        => $busId,
                     'seat_number'   => (string)$seatNum,
                     'row_number'    => $row,
-                    'seat_position' => 'standard',
-                    'seat_type'     => $seatType,
+                    'seat_position' => 'window_left',
+                    'seat_type'     => $uniformSeatType,
                     'is_booked'     => 0,
                     'is_held'       => 0,
                 ];
