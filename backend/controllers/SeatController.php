@@ -94,11 +94,21 @@ class SeatController
         $layout = [];
 
         if (in_array($busType, ['VIP', 'Luxury'], true)) {
-            // VIP/Luxury: 3 seats per row (1 left, aisle, 2 right)
-            $layout[0] = 1; // driver row passenger
+            // VIP/Luxury: 5 seats per row (3 left, aisle, 2 right) — same physical
+            // arrangement as Standard but with premium styling on the frontend.
+            $layout[0] = 2; // driver row passengers
+            $sum = 2;
             for ($r = 1; $r <= 30; $r++) {
-                if ($r === 4 || $r === 12) $layout[$r] = 2; // door row
-                else $layout[$r] = 3;
+                if ($sum + 7 >= $totalSeats) {
+                    $layout[$r] = $totalSeats - $sum;
+                    break;
+                }
+                if ($r === 4 || $r === 12) {
+                    $layout[$r] = 3; // door row
+                } else {
+                    $layout[$r] = 5;
+                }
+                $sum += $layout[$r];
             }
         } elseif (in_array($busType, ['Coaster', 'Minibus'], true)) {
             // Coaster/Minibus: 4 seats per row (2 left, aisle, 2 right)
@@ -108,11 +118,20 @@ class SeatController
                 else $layout[$r] = 4;
             }
         } else {
-            // Standard: 5 seats per row (3 left, aisle, 2 right)
+            // Standard: 5 seats per row (3 left, aisle, 2 right), up to 7 in the back row
             $layout[0] = 2; // driver row passengers
+            $sum = 2;
             for ($r = 1; $r <= 30; $r++) {
-                if ($r === 4 || $r === 12) $layout[$r] = 3; // door row
-                else $layout[$r] = 5;
+                if ($sum + 7 >= $totalSeats) {
+                    $layout[$r] = $totalSeats - $sum;
+                    break;
+                }
+                if ($r === 4 || $r === 12) {
+                    $layout[$r] = 3; // door row
+                } else {
+                    $layout[$r] = 5;
+                }
+                $sum += $layout[$r];
             }
         }
 

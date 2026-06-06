@@ -22,7 +22,9 @@ export default function BookingSummaryScreen() {
       selectedSchedule.bus_type === 'Luxury' ? (selectedSchedule.price_luxury ?? selectedSchedule.price_vip) :
       selectedSchedule.price_standard)
     : 0;
-  const total = pricePerSeat * selectedSeats.length;
+  const subtotal = pricePerSeat * selectedSeats.length;
+  const platformFee = subtotal * 0.03;
+  const total = subtotal + platformFee;
   // Strip shift suffix (e.g. '2026-05-27Tnight' -> '2026-05-27')
   const displayDate = travelDate?.length > 10 ? travelDate.slice(0, 10) : travelDate;
 
@@ -121,6 +123,8 @@ export default function BookingSummaryScreen() {
           <Text style={styles.cardTitle}>💰 Price Breakdown</Text>
           <Row label={t('booking.price_per_seat')} value={`${pricePerSeat.toLocaleString()} XAF`} />
           <Row label="Seats"                        value={String(selectedSeats.length)} />
+          <Row label="Subtotal"                     value={`${subtotal.toLocaleString()} XAF`} />
+          <Row label="Platform Fee (3%)"            value={`${platformFee.toLocaleString()} XAF`} />
           <View style={styles.divider} />
           <Row label={t('booking.total')}           value={`${total.toLocaleString()} XAF`} bold />
         </View>

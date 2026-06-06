@@ -246,6 +246,7 @@ CREATE TABLE IF NOT EXISTS `booking_seats` (
   `schedule_id`     BIGINT UNSIGNED NOT NULL,
   `passenger_name`  VARCHAR(150),
   `passenger_id_no` VARCHAR(50),
+  `emergency_contact` VARCHAR(50) NULL,
   `is_held`         TINYINT(1) DEFAULT 0,
   `held_until`      TIMESTAMP NULL,
   `created_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

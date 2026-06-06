@@ -37,7 +37,7 @@ export default function PaymentPendingScreen() {
 
   useEffect(() => {
     if (status === 'approved') {
-      router.replace(`/(main)/tickets/passenger-info`);
+      router.replace(`/(main)/tickets`);
     }
   }, [status]);
 

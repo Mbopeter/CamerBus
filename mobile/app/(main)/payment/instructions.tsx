@@ -20,7 +20,7 @@ export default function PaymentInstructionsScreen() {
     ? Number(selectedSchedule.bus_type === 'VIP' ? selectedSchedule.price_vip : selectedSchedule.price_standard)
     : 0;
   const ticketTotal   = pricePerSeat * selectedSeats.length;
-  const PLATFORM_FEE  = 200;
+  const PLATFORM_FEE  = ticketTotal * 0.03;
   const total         = ticketTotal + PLATFORM_FEE;
 
   const getPaymentDetails = () => {
@@ -118,7 +118,7 @@ export default function PaymentInstructionsScreen() {
           <Text style={styles.stepsTitle}>📋 How to Pay</Text>
           {[
             `Open your ${method.nameShort} app`,
-            `Send exactly ${total.toLocaleString()} XAF to ${details.number} (includes 200 XAF platform charge)`,
+            `Send exactly ${total.toLocaleString()} XAF to ${details.number} (includes ${PLATFORM_FEE.toLocaleString()} XAF platform charge)`,
             'Take a screenshot of the successful transfer',
             'Come back here and upload your screenshot',
             'Wait for admin approval (usually within 30 mins)',

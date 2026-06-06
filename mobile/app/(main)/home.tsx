@@ -62,8 +62,8 @@ export default function HomeScreen() {
 
   // Fixed shift slots for all routes
   const SHIFT_SLOTS = [
-    { key: 'day',   icon: '☀️', label: 'Day Shift',   time: '10:00', display: '10:00 AM' },
-    { key: 'night', icon: '🌙', label: 'Night Shift', time: '20:00', display: '8:00 PM' },
+    { key: 'morning', icon: '☀️', label: 'Day Shift',   time: '10:00', display: '10:00 AM' },
+    { key: 'night',   icon: '🌙', label: 'Night Shift', time: '20:00', display: '8:00 PM' },
   ];
 
   const handleSearch = () => {

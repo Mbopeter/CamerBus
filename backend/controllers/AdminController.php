@@ -26,6 +26,8 @@ class AdminController
             $stats['total_bookings']  = (int) Database::query("SELECT COUNT(*) FROM bookings WHERE status != 'cancelled'")->fetchColumn();
             $stats['pending_payments']= (int) Database::query("SELECT COUNT(*) FROM payments WHERE status = 'pending'")->fetchColumn();
             $stats['confirmed_today'] = (int) Database::query("SELECT COUNT(*) FROM bookings WHERE status = 'confirmed' AND DATE(created_at) = CURDATE()")->fetchColumn();
+            $stats['total_revenue']   = (float) Database::query("SELECT COALESCE(SUM(platform_fee), 0) FROM bookings WHERE status = 'confirmed'")->fetchColumn();
+            $stats['today_revenue']   = (float) Database::query("SELECT COALESCE(SUM(platform_fee), 0) FROM bookings WHERE status = 'confirmed' AND DATE(created_at) = CURDATE()")->fetchColumn();
             $stats['total_parcels']   = (int) Database::query("SELECT COUNT(*) FROM parcel_shipments")->fetchColumn();
             $stats['active_schedules']= (int) Database::query("SELECT COUNT(*) FROM schedules WHERE travel_date >= CURDATE() AND status = 'scheduled'")->fetchColumn();
             $stats['total_companies'] = (int) Database::query("SELECT COUNT(*) FROM companies WHERE is_active = 1")->fetchColumn();

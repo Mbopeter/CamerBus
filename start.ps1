@@ -60,7 +60,7 @@ Start-Sleep -Seconds 2
 # ── 6. Start Expo (Mobile App) ──────────────────────────────
 Write-Host "▶  Starting Expo (Mobile App)..." -ForegroundColor Yellow
 Start-Process powershell -ArgumentList "-NoExit", "-Command", `
-    "cd '$PSScriptRoot\mobile'; Write-Host 'Expo starting...' -ForegroundColor Cyan; npx expo start" `
+    "cd '$PSScriptRoot\mobile'; Write-Host 'Expo starting...' -ForegroundColor Cyan; npx expo start --offline" `
     -WindowStyle Normal
 
 # ── Done ─────────────────────────────────────────────────────

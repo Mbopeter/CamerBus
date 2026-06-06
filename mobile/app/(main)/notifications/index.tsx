@@ -17,6 +17,15 @@ const TYPE_ICONS: Record<string, string> = {
   general:           'ℹ️',
 };
 
+const PARCEL_STATUS_LABELS: Record<string, { en: string; fr: string; color: string }> = {
+  received:         { en: 'Received at branch',       fr: 'Reçu à la agence',            color: '#6C63FF' },
+  in_transit:       { en: 'In Transit',                fr: 'En transit',                  color: '#F59E0B' },
+  arrived:          { en: 'Arrived at destination',   fr: 'Arrivé à destination',         color: '#10B981' },
+  ready_for_pickup: { en: 'Ready for Pickup',          fr: 'Prêt à être récupéré',         color: '#3B82F6' },
+  collected:        { en: 'Collected',                 fr: 'Collecté',                    color: '#22C55E' },
+  returned:         { en: 'Returned',                  fr: 'Retourné',                    color: '#EF4444' },
+};
+
 export default function NotificationsScreen() {
   const { t }         = useTranslation();
   const router        = useRouter();
@@ -51,6 +60,47 @@ export default function NotificationsScreen() {
     return t('notifications.days_ago', { n: Math.floor(diff / 86400) });
   };
 
+  const handlePress = (n: any) => {
+    if (!n.is_read) markRead(n.id);
+    try {
+      const parsed = n.data ? JSON.parse(n.data) : {};
+      if (n.type === 'parcel_update' && parsed.tracking_number) {
+        router.push(`/(main)/tracking/${parsed.tracking_number}` as any);
+      } else if (['booking_confirmed','payment_approved','payment_rejected','ticket_ready'].includes(n.type)) {
+        router.push('/(main)/tickets' as any);
+      }
+    } catch (_) {}
+  };
+
+  const renderParcelBadge = (n: any) => {
+    if (n.type !== 'parcel_update') return null;
+    try {
+      const parsed = n.data ? JSON.parse(n.data) : {};
+      if (!parsed.tracking_number) return null;
+      const statusKey = parsed.status ?? '';
+      const statusInfo = PARCEL_STATUS_LABELS[statusKey];
+      return (
+        <View style={styles.trackingBadge}>
+          <View style={styles.trackingRow}>
+            <View>
+              <Text style={styles.trackingLabel}>TRACKING NUMBER</Text>
+              <Text style={styles.trackingNumber}>{parsed.tracking_number}</Text>
+            </View>
+            {statusInfo && (
+              <View style={[styles.statusPill, { backgroundColor: statusInfo.color + '20', borderColor: statusInfo.color }]}>
+                <Text style={[styles.statusPillText, { color: statusInfo.color }]}>
+                  {language === 'fr' ? statusInfo.fr : statusInfo.en}
+                </Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.tapHint}>📍 Tap to view full tracking →</Text>
+        </View>
+      );
+    } catch (_) {}
+    return null;
+  };
+
   return (
     <View style={styles.container}>
       <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
@@ -80,7 +130,7 @@ export default function NotificationsScreen() {
         renderItem={({ item: n }) => (
           <TouchableOpacity
             style={[styles.notifCard, !n.is_read && styles.notifCardUnread]}
-            onPress={() => !n.is_read && markRead(n.id)}
+            onPress={() => handlePress(n)}
             activeOpacity={0.85}
           >
             <View style={styles.notifIcon}>
@@ -93,6 +143,7 @@ export default function NotificationsScreen() {
               <Text style={styles.notifText} numberOfLines={3}>
                 {language === 'fr' && n.body_fr ? n.body_fr : n.body}
               </Text>
+              {renderParcelBadge(n)}
               <Text style={styles.notifTime}>{getTimeAgo(n.created_at)}</Text>
             </View>
             {!n.is_read && <View style={styles.unreadDot} />}
@@ -131,4 +182,11 @@ const getStyles = (theme: any) => StyleSheet.create({
   unreadDot:        { width: 10, height: 10, borderRadius: 5, backgroundColor: theme.primary, marginTop: 4, flexShrink: 0 },
   empty:            { alignItems: 'center', marginTop: 80, gap: 12 },
   emptyText:        { fontSize: 16, color: theme.muted, fontWeight: '600' },
+  trackingBadge:    { marginTop: 10, backgroundColor: theme.background, borderRadius: 12, padding: 12, borderWidth: 1.5, borderColor: theme.border },
+  trackingRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  trackingLabel:    { fontSize: 9, fontWeight: '800', color: theme.muted, letterSpacing: 1.5 },
+  trackingNumber:   { fontSize: 15, fontWeight: '900', color: theme.primary, letterSpacing: 2, marginTop: 2 },
+  statusPill:       { borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 4 },
+  statusPillText:   { fontSize: 10, fontWeight: '800' },
+  tapHint:          { fontSize: 11, color: theme.muted, marginTop: 8, fontStyle: 'italic' },
 });

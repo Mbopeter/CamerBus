@@ -42,15 +42,18 @@ class BookingController
         $pricePerSeat = $schedule['bus_type'] === 'VIP' ? $schedule['price_vip']
                       : ($schedule['bus_type'] === 'Luxury' ? ($schedule['price_luxury'] ?? $schedule['price_vip'])
                       : $schedule['price_standard']);
-        $total = $pricePerSeat * count($seatIds);
+        
+        $subtotal = $pricePerSeat * count($seatIds);
+        $platformFee = $subtotal * 0.03; // 3% commission
+        $total = $subtotal + $platformFee;
 
         Database::beginTransaction();
         try {
             $ref = QRGenerator::generateBookingRef();
             Database::query(
-                'INSERT INTO bookings (booking_ref, user_id, schedule_id, total_amount, passenger_count, status)
-                 VALUES (?,?,?,?,?,\'pending\')',
-                [$ref, $userId, $scheduleId, $total, count($seatIds)]
+                'INSERT INTO bookings (booking_ref, user_id, schedule_id, total_amount, platform_fee, passenger_count, status)
+                 VALUES (?,?,?,?,?,?,\'pending\')',
+                [$ref, $userId, $scheduleId, $total, $platformFee, count($seatIds)]
             );
             $bookingId = (int) Database::lastInsertId();
 

@@ -191,7 +191,7 @@ class ParcelController
                         $parcel['sender_id'],
                         '📦 ' . $msg['en'], '📦 ' . $msg['fr'],
                         'Tracking: ' . $parcel['tracking_number'], 'Suivi: ' . $parcel['tracking_number'],
-                        json_encode(['tracking_number' => $parcel['tracking_number']]),
+                        json_encode(['tracking_number' => $parcel['tracking_number'], 'status' => $body['status']]),
                     ]
                 );
             }

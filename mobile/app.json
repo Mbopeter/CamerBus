@@ -67,13 +67,24 @@
       "typedRoutes": true
     },
    "extra": {
-  "API_BASE_URL": "http://192.168.88.46:8000",
+  "API_BASE_URL": "http://192.168.88.34:8000",
   "eas": {
     "projectId": "your-eas-project-id"
   }
 }
   }
     }
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -26,7 +26,7 @@ export default function SearchScreen() {
       company: company?.id,
       origin_branch: fromBranch?.id,
       dest_branch: toBranch?.id,
-    }).then(r => r.data.data),
+    }).then(r => r.data?.data ?? null),
     enabled: !!((fromCity && toCity) || (fromBranch && toBranch)),
   });
 

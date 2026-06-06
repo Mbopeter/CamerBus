@@ -12,6 +12,31 @@ import { useAuthStore } from '../../../store/useAuthStore';
 import { useThemeColor } from '../../../hooks/useThemeColor';
 import Toast from 'react-native-toast-message';
 
+const Section = ({ title }: { title: string }) => {
+  const theme = useThemeColor();
+  const styles = getStyles(theme);
+  return <Text style={styles.sectionTitle}>{title}</Text>;
+};
+
+const Field = ({ label, value, onChangeText, placeholder, keyboardType = 'default' as any, multiline = false }: any) => {
+  const theme = useThemeColor();
+  const styles = getStyles(theme);
+  return (
+    <View style={styles.field}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <TextInput
+        style={[styles.fieldInput, multiline && { height: 80, textAlignVertical: 'top' }]}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={theme.muted}
+        keyboardType={keyboardType}
+        multiline={multiline}
+      />
+    </View>
+  );
+};
+
 export default function SendParcelScreen() {
   const { t }    = useTranslation();
   const router   = useRouter();
@@ -59,25 +84,6 @@ export default function SendParcelScreen() {
       Toast.show({ type: 'error', text1: err?.response?.data?.message ?? t('errors.server') });
     },
   });
-
-  const Section = ({ title }: { title: string }) => (
-    <Text style={styles.sectionTitle}>{title}</Text>
-  );
-
-  const Field = ({ label, value, onChangeText, placeholder, keyboardType = 'default' as any, multiline = false }: any) => (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
-        style={[styles.fieldInput, multiline && { height: 80, textAlignVertical: 'top' }]}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={theme.muted}
-        keyboardType={keyboardType}
-        multiline={multiline}
-      />
-    </View>
-  );
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

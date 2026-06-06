@@ -17,7 +17,7 @@ class RouteController
         // Strip datetime if passed (from home shift selector) and extract shift or time
         if (strlen($date) > 10) {
             $extra = substr($date, 11); // Extract after 'T'
-            if (in_array($extra, ['day', 'night'])) {
+            if (in_array($extra, ['morning', 'afternoon', 'night'])) {
                 $shiftFilter = $extra;
             } else {
                 $timeFilter = substr($extra, 0, 5); // Extract HH:MM
@@ -137,30 +137,33 @@ class RouteController
         $schedules = Database::query($sql, $params)->fetchAll();
 
         // ── NEXT-DAY FALLBACK ────────────────────────────────────────────────
-        // If no schedules remain for today (all times passed), automatically
-        // show tomorrow's schedule so the user always sees the next available bus.
+        // If no schedules remain for today (all departure times have passed),
+        // automatically fall back to tomorrow so the user always sees something.
+        // This works even when a shift/time filter is active.
         $showingNextDay = false;
-        if (empty($schedules) && $date === date('Y-m-d') && !$shiftFilter && !$timeFilter) {
-            $tomorrow      = date('Y-m-d', strtotime('+1 day'));
-            $tomorrowParams = [$tomorrow];
-            $tomorrowSql   = str_replace(
-                'WHERE s.travel_date = ?',
-                'WHERE s.travel_date = ?',
-                $sql
-            );
-            // Replace the date param and remove the departure_time past-filter
-            $tomorrowSql   = preg_replace(
+        if (empty($schedules) && $date === date('Y-m-d')) {
+            $tomorrow    = date('Y-m-d', strtotime('+1 day'));
+            // Remove the "departure_time > now" filter (not needed for a future date)
+            $tomorrowSql = preg_replace(
                 '/AND s\.departure_time > DATE_ADD\(NOW\(\), INTERVAL -\d+ MINUTE\)/',
                 '',
                 $sql
             );
+            // Rebuild params: first slot is travel_date, rest stay the same
+            $tomorrowParams = [$tomorrow];
             if ($fromCity && $toCity) {
                 $tomorrowParams[] = $resolvedOriginCityId;
                 $tomorrowParams[] = $resolvedDestCityId;
             }
-            $schedules    = Database::query($tomorrowSql, $tomorrowParams)->fetchAll();
-            $date          = $tomorrow; // update for response
-            $showingNextDay = true;
+            // Re-add shift filter param if applicable
+            if ($shiftFilter) {
+                $tomorrowParams[] = $shiftFilter;
+            } elseif ($timeFilter) {
+                $tomorrowParams[] = $timeFilter . '%';
+            }
+            $schedules      = Database::query($tomorrowSql, $tomorrowParams)->fetchAll();
+            $date           = $tomorrow;
+            $showingNextDay = !empty($schedules); // only flag if we actually found something
         }
 
         foreach ($schedules as &$s) {
@@ -292,7 +295,7 @@ class RouteController
 
                 // Compute shift label
                 $hour  = (int) substr($time, 0, 2);
-                $shift = $hour >= 20 ? 'night' : 'day';
+                $shift = $hour >= 20 ? 'night' : 'morning';
 
                 // Compute estimated arrival
                 $depTs     = strtotime("$date $time");

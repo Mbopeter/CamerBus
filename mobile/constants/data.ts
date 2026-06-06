@@ -56,8 +56,9 @@ export const PAYMENT_METHODS = [
 export const BUS_TYPES = ['Standard', 'VIP', 'Luxury', 'Coaster', 'Minibus'] as const;
 
 export const SHIFTS = {
-  day:   { label: 'Day Shift',   labelFr: 'Jour', icon: '☀️', time: '10:00' },
-  night: { label: 'Night Shift', labelFr: 'Nuit', icon: '🌙', time: '20:00' },
+  morning:   { label: 'Morning',   labelFr: 'Matin',       icon: '☀️',  time: '10:00' },
+  afternoon: { label: 'Afternoon', labelFr: 'Après-midi',  icon: '🌤️', time: '14:00' },
+  night:     { label: 'Night',     labelFr: 'Nuit',         icon: '🌙', time: '20:00' },
 };
 
 export const PARCEL_STATUSES = {
