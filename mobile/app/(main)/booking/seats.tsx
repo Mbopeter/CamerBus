@@ -1,13 +1,11 @@
 import React from 'react';
-import {
-  View,
+import { View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Dimensions,
-} from 'react-native';
+  Dimensions, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { scheduleService } from '../../../services/endpoints';
 import { useBookingStore } from '../../../store/useBookingStore';
 import { useThemeColor } from '../../../hooks/useThemeColor';
+import { ArrowLeft, Star, BusFront, Armchair, ArrowRight } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -136,15 +135,17 @@ export default function SeatsScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
+      <ImageBackground source={require('../../../assets/bgimage.jpg')} style={styles.header} resizeMode="cover">
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(10,20,50,0.72)' }} pointerEvents="none" />
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <ArrowLeft size={26} color="#fff" />
         </TouchableOpacity>
         <View style={styles.titleRow}>
           <Text style={styles.title}>{t('booking.title')}</Text>
           <View style={[styles.classBadge, isVipBus ? styles.classBadgeVip : styles.classBadgeStd]}>
+            {isVipBus ? <Star size={11} color="#1A1A1A" fill="#1A1A1A" /> : <BusFront size={11} color="#fff" />}
             <Text style={styles.classBadgeText}>
-              {isVipBus ? '⭐ VIP' : '🚌 Standard'}
+              {isVipBus ? ' VIP' : ' Standard'}
             </Text>
           </View>
         </View>
@@ -159,7 +160,7 @@ export default function SeatsScreen() {
             </View>
           ))}
         </View>
-      </LinearGradient>
+      </ImageBackground>
 
       {/* Seat map */}
       <ScrollView
@@ -268,9 +269,12 @@ export default function SeatsScreen() {
       {selectedSeats.length > 0 && (
         <View style={styles.bottomBar}>
           <View>
-            <Text style={styles.selectedInfo}>
-              💺 {selectedSeats.map(s => s.seat_number).join(', ')}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+              <Armchair size={16} color={theme.text} />
+              <Text style={styles.selectedInfo}>
+                {selectedSeats.map(s => s.seat_number).join(', ')}
+              </Text>
+            </View>
             <View style={styles.priceRow}>
               <Text style={styles.totalPrice}>{totalPrice.toLocaleString()} XAF</Text>
               {isVipBus && <Text style={styles.vipLabel}>VIP</Text>}
@@ -282,7 +286,10 @@ export default function SeatsScreen() {
             activeOpacity={0.85}
           >
             <LinearGradient colors={theme.gradientPrimary} style={styles.continueBtnInner}>
-              <Text style={styles.continueBtnText}>{t('booking.continue')} →</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={styles.continueBtnText}>{t('booking.continue')}</Text>
+                <ArrowRight size={16} color="#fff" />
+              </View>
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -299,10 +306,9 @@ const getStyles = (theme: any) =>
     /* ── Header ── */
     header:         { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 20 },
     backBtn:        { marginBottom: 10 },
-    backText:       { fontSize: 26, color: '#fff' },
     titleRow:       { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 },
     title:          { fontSize: 22, fontWeight: '800', color: '#fff' },
-    classBadge:     { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 },
+    classBadge:     { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 },
     classBadgeVip:  { backgroundColor: '#FCD116' },
     classBadgeStd:  { backgroundColor: 'rgba(255,255,255,0.2)' },
     classBadgeText: { fontSize: 11, fontWeight: '800', color: '#1A1A1A' },

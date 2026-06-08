@@ -6,6 +6,9 @@ import { useQuery } from '@tanstack/react-query';
 import { companyService } from '../../../services/endpoints';
 import { useBookingStore } from '../../../store/useBookingStore';
 import { useThemeColor } from '../../../hooks/useThemeColor';
+import { getCompanyLogo } from '../../../utils/companyLogos';
+import { Image } from 'react-native';
+import { ArrowLeft, MapPin, Star, Check, Ticket as TicketIcon, Package, CreditCard, Smartphone, Building, Map, ArrowRight, Building2, Phone } from 'lucide-react-native';
 
 export default function CompanyDetailScreen() {
   const { id }   = useLocalSearchParams<{ id: string }>();
@@ -37,14 +40,27 @@ export default function CompanyDetailScreen() {
       {/* Hero */}
       <LinearGradient colors={theme.gradientPrimary} style={styles.hero}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <ArrowLeft size={26} color="#fff" />
         </TouchableOpacity>
-        <View style={styles.logoBox}><Text style={{ fontSize: 42 }}>🚌</Text></View>
+        <View style={styles.logoBox}>
+          <Image source={getCompanyLogo(company.name)} style={styles.heroLogo} resizeMode="cover" />
+        </View>
         <Text style={styles.name}>{company.name}</Text>
         <View style={styles.metaRow}>
-          <Text style={styles.metaItem}>📍 {company.hq_city}</Text>
-          <Text style={styles.metaItem}>⭐ {company.rating} ({company.total_reviews})</Text>
-          {company.is_verified ? <Text style={styles.verified}>✓ Verified</Text> : null}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <MapPin size={13} color="rgba(255,255,255,0.8)" />
+            <Text style={styles.metaItem}>{company.hq_city}</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Star size={13} color="rgba(255,255,255,0.8)" />
+            <Text style={styles.metaItem}>{company.rating} ({company.total_reviews})</Text>
+          </View>
+          {company.is_verified ? (
+            <View style={styles.verified}>
+              <Check size={10} color="#fff" />
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#fff', marginLeft: 4 }}>Verified</Text>
+            </View>
+          ) : null}
         </View>
         <Text style={styles.desc}>{company.description}</Text>
       </LinearGradient>
@@ -56,7 +72,7 @@ export default function CompanyDetailScreen() {
             router.push('/(main)/home');
         }}>
           <LinearGradient colors={theme.gradientPrimary} style={styles.serviceBtnInner}>
-            <Text style={{ fontSize: 24 }}>🎫</Text>
+            <TicketIcon size={24} color="#fff" />
             <Text style={styles.serviceBtnText}>Book Ticket</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -65,7 +81,7 @@ export default function CompanyDetailScreen() {
             router.push(`/(main)/parcels/send?company_id=${company.id}` as any);
         }}>
           <LinearGradient colors={theme.gradientDark} style={styles.serviceBtnInner}>
-            <Text style={{ fontSize: 24 }}>📦</Text>
+            <Package size={24} color="#fff" />
             <Text style={styles.serviceBtnText}>Send Parcel</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -73,11 +89,16 @@ export default function CompanyDetailScreen() {
 
       {/* Payment Info */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>💳 Payment Details</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+          <CreditCard size={18} color={theme.text} />
+          <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Payment Details</Text>
+        </View>
         <View style={styles.paymentCard}>
           {company.mtn_number && (
             <View style={styles.payRow}>
-              <View style={[styles.payIcon, { backgroundColor: '#FFF9C4' }]}><Text>📱</Text></View>
+              <View style={[styles.payIcon, { backgroundColor: '#FFF9C4' }]}>
+                <Smartphone size={20} color="#856404" />
+              </View>
               <View>
                 <Text style={styles.payMethod}>MTN Mobile Money</Text>
                 <Text style={styles.payNum}>{company.mtn_name} — {company.mtn_number}</Text>
@@ -86,7 +107,9 @@ export default function CompanyDetailScreen() {
           )}
           {company.orange_number && (
             <View style={styles.payRow}>
-              <View style={[styles.payIcon, { backgroundColor: '#FFE0B2' }]}><Text>📱</Text></View>
+              <View style={[styles.payIcon, { backgroundColor: '#FFE0B2' }]}>
+                <Smartphone size={20} color="#E65100" />
+              </View>
               <View>
                 <Text style={styles.payMethod}>Orange Money</Text>
                 <Text style={styles.payNum}>{company.orange_name} — {company.orange_number}</Text>
@@ -95,7 +118,9 @@ export default function CompanyDetailScreen() {
           )}
           {company.bank_account && (
             <View style={styles.payRow}>
-              <View style={[styles.payIcon, { backgroundColor: '#E3F2FD' }]}><Text>🏦</Text></View>
+              <View style={[styles.payIcon, { backgroundColor: '#E3F2FD' }]}>
+                <Building size={20} color="#1565C0" />
+              </View>
               <View>
                 <Text style={styles.payMethod}>{company.bank_name}</Text>
                 <Text style={styles.payNum}>{company.bank_account_name} — {company.bank_account}</Text>
@@ -107,7 +132,10 @@ export default function CompanyDetailScreen() {
 
       {/* Available Routes */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🗺️ Available Routes</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+          <Map size={18} color={theme.text} />
+          <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Available Routes</Text>
+        </View>
         {(company.routes ?? []).map((r: any) => (
           <TouchableOpacity key={r.id} style={styles.routeCard} activeOpacity={0.85}
             onPress={() => {
@@ -116,7 +144,7 @@ export default function CompanyDetailScreen() {
             }}>
             <View style={{ flexDirection:'row', alignItems:'center', gap:10 }}>
               <Text style={styles.routeCity}>{r.origin_city}</Text>
-              <Text style={styles.routeArrow}>→</Text>
+              <ArrowRight size={16} color={theme.muted} />
               <Text style={styles.routeCity}>{r.dest_city}</Text>
             </View>
             <View style={styles.priceTag}>
@@ -128,7 +156,10 @@ export default function CompanyDetailScreen() {
 
       {/* Branches by City */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🏢 Branch Offices</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+          <Building2 size={18} color={theme.text} />
+          <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Branch Offices</Text>
+        </View>
         {Object.entries(branchesByCity).map(([city, branches]) => (
           <View key={city} style={styles.cityGroup}>
             <Text style={styles.cityLabel}>{city}</Text>
@@ -136,7 +167,12 @@ export default function CompanyDetailScreen() {
               <View key={b.id} style={styles.branchItem}>
                 <Text style={styles.branchName}>{b.name}</Text>
                 <Text style={styles.branchAddr}>{b.address}</Text>
-                {b.phone && <Text style={styles.branchPhone}>📞 {b.phone}</Text>}
+                {b.phone && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
+                    <Phone size={12} color={theme.primary} />
+                    <Text style={[styles.branchPhone, { marginTop: 0 }]}>{b.phone}</Text>
+                  </View>
+                )}
               </View>
             ))}
           </View>
@@ -154,11 +190,12 @@ const getStyles = (theme: any) => StyleSheet.create({
   hero:        { paddingTop:56, paddingHorizontal:20, paddingBottom:30, alignItems:'center' },
   backBtn:     { alignSelf:'flex-start', marginBottom:16 },
   backText:    { fontSize:26, color:'#fff' },
-  logoBox:     { width:80, height:80, borderRadius:24, backgroundColor:'rgba(255,255,255,0.15)', alignItems:'center', justifyContent:'center', marginBottom:12 },
+  logoBox:     { width:80, height:80, borderRadius:24, backgroundColor:'#fff', alignItems:'center', justifyContent:'center', marginBottom:12, overflow: 'hidden' },
+  heroLogo:    { width: '100%', height: '100%' },
   name:        { fontSize:26, fontWeight:'800', color:'#fff', textAlign:'center' },
-  metaRow:     { flexDirection:'row', gap:12, marginTop:8, flexWrap:'wrap', justifyContent:'center' },
+  metaRow:     { flexDirection:'row', gap:12, marginTop:8, flexWrap:'wrap', justifyContent:'center', alignItems: 'center' },
   metaItem:    { fontSize:13, color:'rgba(255,255,255,0.8)' },
-  verified:    { backgroundColor:'rgba(255,255,255,0.2)', color:'#fff', fontSize:12, fontWeight:'700', paddingHorizontal:8, paddingVertical:3, borderRadius:10 },
+  verified:    { backgroundColor:'rgba(255,255,255,0.2)', paddingHorizontal:8, paddingVertical:3, borderRadius:10, flexDirection: 'row', alignItems: 'center' },
   desc:        { fontSize:14, color:'rgba(255,255,255,0.75)', textAlign:'center', marginTop:10, lineHeight:22 },
   section:     { padding:20, borderBottomWidth:1, borderBottomColor:theme.border },
   sectionTitle:{ fontSize:17, fontWeight:'800', color:theme.text, marginBottom:14 },

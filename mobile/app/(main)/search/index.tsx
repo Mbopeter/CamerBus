@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Image, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -7,8 +7,10 @@ import { useQuery } from '@tanstack/react-query';
 import { routeService } from '../../../services/endpoints';
 import { useBookingStore } from '../../../store/useBookingStore';
 import { useThemeColor } from '../../../hooks/useThemeColor';
+import { getCompanyLogo } from '../../../utils/companyLogos';
 import { Shadow } from '../../../constants/colors';
 import { SHIFTS } from '../../../constants/data';
+import { ArrowLeft, ArrowRight, CalendarDays, Moon, Star, Armchair, Tag, BusFront } from 'lucide-react-native';
 
 export default function SearchScreen() {
   const { t }    = useTranslation();
@@ -34,10 +36,96 @@ export default function SearchScreen() {
   const showingNextDay: boolean = data?.showing_next_day ?? false;
   const displayDate: string = data?.date ?? (travelDate?.slice(0, 10) ?? '');
 
-  const handleSelect = (schedule: any) => {
+  const handleSelect = useCallback((schedule: any) => {
     setSchedule(schedule);
     router.push('/(main)/booking/seats');
-  };
+  }, [setSchedule, router]);
+
+  const renderScheduleItem = useCallback(({ item: s }: { item: any }) => {
+    const shift = SHIFTS[s.shift as keyof typeof SHIFTS];
+    const isFull = s.available_seats === 0;
+    return (
+      <View style={[styles.card, isFull && styles.cardFull]}>
+        {/* Company row */}
+        <View style={styles.cardTop}>
+          <View style={styles.companyChip}>
+            <Image source={getCompanyLogo(s.company_name)} style={styles.companyLogo} resizeMode="contain" />
+            <Text style={styles.companyName}>{s.company_name}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+              <Star size={11} color={theme.muted} />
+              <Text style={styles.rating}>{s.rating}</Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {/* Bus Signature Badge */}
+            <View style={styles.sigBadge}>
+              <Text style={styles.sigText}>{s.bus_signature ?? s.plate_number}</Text>
+            </View>
+            <View style={[styles.busTypeBadge, s.bus_type === 'VIP' && styles.vipBadge]}>
+              <Text style={[styles.busTypeText, s.bus_type === 'VIP' && styles.vipText]}>
+                {s.bus_type}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Time & Route */}
+        <View style={styles.timeRow}>
+          <View style={styles.timeCol}>
+            <Text style={styles.time}>{s.departure_time?.slice(0,5)}</Text>
+            <Text style={styles.branchText}>{s.origin_branch}</Text>
+          </View>
+          <View style={styles.durationCol}>
+            <Text style={styles.shiftBadge}>{shift?.icon} {shift?.label}</Text>
+            <View style={styles.durationLine}><View style={styles.durationDot} /></View>
+            <Text style={styles.duration}>
+              {s.estimated_duration_minutes ? `${Math.floor(s.estimated_duration_minutes/60)}h${s.estimated_duration_minutes%60 > 0 ? s.estimated_duration_minutes%60+'m' : ''}` : '---'}
+            </Text>
+          </View>
+          <View style={[styles.timeCol, { alignItems: 'flex-end' }]}>
+            <Text style={styles.time}>{s.estimated_arrival_time?.slice(0,5) ?? '---'}</Text>
+            <Text style={styles.branchText}>{s.dest_branch}</Text>
+          </View>
+        </View>
+
+        {/* Price & Seats */}
+        <View style={styles.cardBottom}>
+          <View>
+            <Text style={styles.price}>
+              {Number(s.flat_price ?? (s.bus_type === 'VIP' ? s.price_vip : s.bus_type === 'Luxury' ? (s.price_luxury ?? s.price_vip) : s.price_standard)).toLocaleString()} XAF
+            </Text>
+            <Text style={styles.perSeat}>per seat</Text>
+          </View>
+          <View style={styles.seatsInfo}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Armchair size={14} color={s.available_seats < 5 ? theme.danger : theme.success} />
+              <Text style={[styles.seatsLeft, s.available_seats < 5 && { color: theme.danger }]}>
+                {s.available_seats} {t('schedule.seats_left', { count: s.available_seats })}
+              </Text>
+            </View>
+            {/* Bus find-at-park indicator */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
+              <Tag size={12} color={theme.primary} />
+              <Text style={[styles.busLocator, { marginTop: 0 }]}>{s.bus_signature ?? s.plate_number}</Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={[styles.selectBtn, isFull && styles.selectBtnDisabled]}
+            onPress={() => !isFull && handleSelect(s)}
+            disabled={isFull}
+            activeOpacity={0.85}
+          >
+            <LinearGradient
+              colors={isFull ? [theme.muted, theme.muted] : theme.gradientPrimary}
+              style={styles.selectBtnInner}
+            >
+              <Text style={styles.selectBtnText}>{isFull ? 'Full' : t('schedule.select')}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }, [theme, t, handleSelect, styles]);
 
   // Show branch names when doing a branch-based search
   const fromLabel = fromBranch ? `${fromBranch.name} (${fromCity?.name ?? ''})` : (fromCity?.name ?? '');
@@ -45,118 +133,49 @@ export default function SearchScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
+      <ImageBackground source={require('../../../assets/bgimage.jpg')} style={styles.header} resizeMode="cover">
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(10,20,50,0.72)' }} pointerEvents="none" />
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <ArrowLeft size={26} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>{t('search.title')}</Text>
         <View style={styles.routeBanner}>
           <Text style={styles.routeText} numberOfLines={1}>{fromLabel}</Text>
-          <Text style={styles.routeArrow}>  ✈️  </Text>
+          <View style={{ paddingHorizontal: 12 }}><ArrowRight size={20} color="#fff" /></View>
           <Text style={[styles.routeText, { textAlign: 'right' }]} numberOfLines={1}>{toLabel}</Text>
         </View>
-        <Text style={styles.dateText}>📅 {displayDate || (travelDate?.length > 10 ? travelDate.slice(0, 10) : travelDate)}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
+          <CalendarDays size={14} color="rgba(255,255,255,0.8)" />
+          <Text style={styles.dateText}>{displayDate || (travelDate?.length > 10 ? travelDate.slice(0, 10) : travelDate)}</Text>
+        </View>
         <Text style={styles.countText}>
           {isLoading ? t('common.loading') : t('search.available', { count: schedules.length })}
         </Text>
-      </LinearGradient>
+      </ImageBackground>
 
       {/* Next-day notice banner */}
       {showingNextDay && (
         <View style={styles.nextDayBanner}>
-          <Text style={styles.nextDayIcon}>🌙</Text>
+          <Moon size={24} color="#B45309" />
           <View style={{ flex: 1 }}>
             <Text style={styles.nextDayTitle}>No more buses today</Text>
             <Text style={styles.nextDaySubtitle}>Showing next available — {displayDate}</Text>
           </View>
         </View>
-      )}
-
-      <FlatList
+      )}      <FlatList
         data={schedules}
         keyExtractor={i => String(i.id)}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        removeClippedSubviews={true}
         refreshControl={<RefreshControl refreshing={Boolean(isLoading)} onRefresh={refetch} tintColor={theme.primary} />}
-        renderItem={({ item: s }) => {
-          const shift = SHIFTS[s.shift as keyof typeof SHIFTS];
-          const isFull = s.available_seats === 0;
-          return (
-            <View style={[styles.card, isFull && styles.cardFull]}>
-              {/* Company row */}
-              <View style={styles.cardTop}>
-                <View style={styles.companyChip}>
-                  <Text style={styles.companyEmoji}>🚌</Text>
-                  <Text style={styles.companyName}>{s.company_name}</Text>
-                  <Text style={styles.rating}>⭐ {s.rating}</Text>
-                </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  {/* Bus Signature Badge */}
-                  <View style={styles.sigBadge}>
-                    <Text style={styles.sigText}>{s.bus_signature ?? s.plate_number}</Text>
-                  </View>
-                  <View style={[styles.busTypeBadge, s.bus_type === 'VIP' && styles.vipBadge]}>
-                    <Text style={[styles.busTypeText, s.bus_type === 'VIP' && styles.vipText]}>
-                      {s.bus_type}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* Time & Route */}
-              <View style={styles.timeRow}>
-                <View style={styles.timeCol}>
-                  <Text style={styles.time}>{s.departure_time?.slice(0,5)}</Text>
-                  <Text style={styles.branchText}>{s.origin_branch}</Text>
-                </View>
-                <View style={styles.durationCol}>
-                  <Text style={styles.shiftBadge}>{shift?.icon} {shift?.label}</Text>
-                  <View style={styles.durationLine}><View style={styles.durationDot} /></View>
-                  <Text style={styles.duration}>
-                    {s.estimated_duration_minutes ? `${Math.floor(s.estimated_duration_minutes/60)}h${s.estimated_duration_minutes%60 > 0 ? s.estimated_duration_minutes%60+'m' : ''}` : '---'}
-                  </Text>
-                </View>
-                <View style={[styles.timeCol, { alignItems: 'flex-end' }]}>
-                  <Text style={styles.time}>{s.estimated_arrival_time?.slice(0,5) ?? '---'}</Text>
-                  <Text style={styles.branchText}>{s.dest_branch}</Text>
-                </View>
-              </View>
-
-              {/* Price & Seats */}
-              <View style={styles.cardBottom}>
-                <View>
-                  <Text style={styles.price}>
-                    {Number(s.flat_price ?? (s.bus_type === 'VIP' ? s.price_vip : s.bus_type === 'Luxury' ? (s.price_luxury ?? s.price_vip) : s.price_standard)).toLocaleString()} XAF
-                  </Text>
-                  <Text style={styles.perSeat}>per seat</Text>
-                </View>
-                <View style={styles.seatsInfo}>
-                  <Text style={[styles.seatsLeft, s.available_seats < 5 && { color: theme.danger }]}>
-                    💺 {s.available_seats} {t('schedule.seats_left', { count: s.available_seats })}
-                  </Text>
-                  {/* Bus find-at-park indicator */}
-                  <Text style={styles.busLocator}>🏷️ {s.bus_signature ?? s.plate_number}</Text>
-                </View>
-                <TouchableOpacity
-                  style={[styles.selectBtn, isFull && styles.selectBtnDisabled]}
-                  onPress={() => !isFull && handleSelect(s)}
-                  disabled={isFull}
-                  activeOpacity={0.85}
-                >
-                  <LinearGradient
-                    colors={isFull ? [theme.muted, theme.muted] : theme.gradientPrimary}
-                    style={styles.selectBtnInner}
-                  >
-                    <Text style={styles.selectBtnText}>{isFull ? 'Full' : t('schedule.select')}</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-            </View>
-          );
-        }}
+        renderItem={renderScheduleItem}
         ListEmptyComponent={!isLoading ? (
           <View style={styles.empty}>
-            <Text style={{ fontSize: 52 }}>🚌</Text>
+            <BusFront size={52} color={theme.muted} />
             <Text style={styles.emptyTitle}>{t('search.no_results')}</Text>
             <Text style={styles.emptySub}>{t('search.no_results_subtitle')}</Text>
           </View>
@@ -174,15 +193,14 @@ const getStyles = (theme: any) => StyleSheet.create({
   title:          { fontSize: 22, fontWeight: '800', color: '#fff', marginBottom: 12 },
   routeBanner:    { flexDirection: 'row', alignItems: 'center' },
   routeText:      { fontSize: 20, fontWeight: '800', color: '#fff' },
-  routeArrow:     { fontSize: 18 },
-  dateText:       { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 6 },
+  dateText:       { fontSize: 14, color: 'rgba(255,255,255,0.8)' },
   countText:      { fontSize: 13, color: theme.accent, fontWeight: '700', marginTop: 4 },
   list:           { padding: 16, gap: 14, paddingBottom: 100 },
   card:           { backgroundColor: theme.card, borderRadius: 20, padding: 18, ...Shadow.md },
   cardFull:       { opacity: 0.65 },
   cardTop:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   companyChip:    { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: theme.background, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
-  companyEmoji:   { fontSize: 16 },
+  companyLogo:    { width: 24, height: 24, borderRadius: 4 },
   companyName:    { fontSize: 13, fontWeight: '700', color: theme.text },
   rating:         { fontSize: 11, color: theme.muted },
   busTypeBadge:   { backgroundColor: theme.primary + '15', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10 },

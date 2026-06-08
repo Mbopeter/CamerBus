@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { parcelService } from '../../../services/endpoints';
 import { useThemeColor } from '../../../hooks/useThemeColor';
 import { PARCEL_STATUSES } from '../../../constants/data';
+import { ArrowLeft, Hourglass, SearchX, MapPin, ArrowRight, Package, AlertTriangle, BusFront, Clock } from 'lucide-react-native';
 
 export default function TrackParcelScreen() {
   const { t }    = useTranslation();
@@ -27,9 +28,10 @@ export default function TrackParcelScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
+      <ImageBackground source={require('../../../assets/bgimage.jpg')} style={styles.header} resizeMode="cover">
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(10,20,50,0.72)' }} pointerEvents="none" />
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <ArrowLeft size={26} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>{t('parcel.track_title')}</Text>
         <Text style={styles.subtitle}>Enter your tracking number below</Text>
@@ -52,16 +54,16 @@ export default function TrackParcelScreen() {
             <Text style={styles.trackBtnText}>{t('parcel.track')}</Text>
           </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </ImageBackground>
 
       <ScrollView contentContainerStyle={styles.scroll}>
         {isLoading && (
-          <View style={styles.center}><Text style={{ fontSize: 40 }}>⏳</Text><Text style={{ color: theme.muted }}>{t('common.loading')}</Text></View>
+          <View style={styles.center}><Hourglass size={40} color={theme.muted} /><Text style={{ color: theme.muted }}>{t('common.loading')}</Text></View>
         )}
 
         {error && (
           <View style={styles.center}>
-            <Text style={{ fontSize: 40 }}>😞</Text>
+            <SearchX size={40} color={theme.danger} />
             <Text style={styles.errorText}>Parcel not found. Check your tracking number.</Text>
           </View>
         )}
@@ -77,13 +79,16 @@ export default function TrackParcelScreen() {
 
             {/* Route */}
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>📍 Route</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+                <MapPin size={18} color={theme.text} />
+                <Text style={[styles.cardTitle, { marginBottom: 0 }]}>Route</Text>
+              </View>
               <View style={styles.routeRow}>
                 <View>
                   <Text style={styles.branchName}>{data.origin_branch_name}</Text>
                   <Text style={styles.cityName}>{data.origin_city}</Text>
                 </View>
-                <Text style={styles.routeArrow}>→</Text>
+                <ArrowRight size={22} color={theme.primary} />
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={styles.branchName}>{data.dest_branch_name}</Text>
                   <Text style={styles.cityName}>{data.dest_city}</Text>
@@ -93,14 +98,17 @@ export default function TrackParcelScreen() {
 
             {/* Details */}
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>📦 Package Details</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+                <Package size={18} color={theme.text} />
+                <Text style={[styles.cardTitle, { marginBottom: 0 }]}>Package Details</Text>
+              </View>
               {[
                 ['Sender',    data.sender_name + ' · ' + data.sender_phone],
                 ['Receiver',  data.receiver_name + ' · ' + data.receiver_phone],
                 ['Company',   data.company_name],
                 ['Description', data.description],
                 ['Weight',    data.weight_kg + ' kg'],
-                ['Fragile',   data.is_fragile ? '⚠️ Yes' : 'No'],
+                ['Fragile',   data.is_fragile ? 'Yes (Fragile)' : 'No'],
                 ['Shipping Cost', Number(data.shipping_cost).toLocaleString() + ' XAF'],
               ].map(([l, v]) => (
                 <View key={l} style={styles.detailRow}>
@@ -109,9 +117,12 @@ export default function TrackParcelScreen() {
                 </View>
               ))}
               {/* Bus signature for in-transit parcels */}
-              {(data.status === 'in_transit' || data.status === 'received') && data.bus_signature && (
+              {(data.status === 'in_transit' || data.status === 'received') && !!data.bus_signature && (
                 <View style={styles.busSignatureBox}>
-                  <Text style={styles.busSignatureTitle}>🚌 Your Package is on Bus</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <BusFront size={16} color="rgba(255,255,255,0.75)" />
+                    <Text style={styles.busSignatureTitle}>Your Package is on Bus</Text>
+                  </View>
                   <Text style={styles.busSignatureCode}>{data.bus_signature}</Text>
                   <Text style={styles.busSignatureHint}>Show this to park staff to verify your package location</Text>
                 </View>
@@ -120,7 +131,10 @@ export default function TrackParcelScreen() {
 
             {/* Tracking Timeline */}
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>🕐 Tracking History</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+                <Clock size={18} color={theme.text} />
+                <Text style={[styles.cardTitle, { marginBottom: 0 }]}>Tracking History</Text>
+              </View>
               {(data.tracking_history ?? []).map((evt: any, i: number) => {
                 const evtStatus = PARCEL_STATUSES[evt.status as keyof typeof PARCEL_STATUSES];
                 return (
@@ -133,8 +147,13 @@ export default function TrackParcelScreen() {
                     </View>
                     <View style={styles.timelineContent}>
                       <Text style={styles.timelineStatus}>{evtStatus?.label}</Text>
-                      {evt.location && <Text style={styles.timelineLocation}>📍 {evt.location}</Text>}
-                      {evt.description && <Text style={styles.timelineDesc}>{evt.description}</Text>}
+                      {!!evt.location && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
+                          <MapPin size={12} color={theme.textLight} />
+                          <Text style={[styles.timelineLocation, { marginTop: 0 }]}>{evt.location}</Text>
+                        </View>
+                      )}
+                      {!!evt.description && <Text style={styles.timelineDesc}>{evt.description}</Text>}
                       <Text style={styles.timelineTime}>{evt.created_at?.slice(0,16).replace('T',' ')}</Text>
                     </View>
                   </View>
@@ -152,7 +171,6 @@ const getStyles = (theme: any) => StyleSheet.create({
   container:       { flex: 1, backgroundColor: theme.background },
   header:          { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 28 },
   backBtn:         { marginBottom: 12 },
-  backText:        { fontSize: 26, color: '#fff' },
   title:           { fontSize: 26, fontWeight: '800', color: '#fff' },
   subtitle:        { fontSize: 14, color: 'rgba(255,255,255,0.75)', marginTop: 4, marginBottom: 16 },
   searchRow:       { flexDirection: 'row', gap: 10 },
@@ -167,11 +185,10 @@ const getStyles = (theme: any) => StyleSheet.create({
   statusLabel:     { fontSize: 22, fontWeight: '800' },
   trackingDisplay: { fontSize: 14, color: theme.muted, letterSpacing: 2, fontWeight: '600' },
   card:            { backgroundColor: theme.card, borderRadius: 20, padding: 20, shadowColor:'#000', shadowOffset:{width:0,height:4}, shadowOpacity:0.07, shadowRadius:12, elevation:4 },
-  cardTitle:       { fontSize: 15, fontWeight: '800', color: theme.text, marginBottom: 14 },
+  cardTitle:       { fontSize: 15, fontWeight: '800', color: theme.text },
   routeRow:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   branchName:      { fontSize: 15, fontWeight: '700', color: theme.text },
   cityName:        { fontSize: 12, color: theme.muted, marginTop: 3 },
-  routeArrow:      { fontSize: 22, color: theme.primary, fontWeight: '800' },
   detailRow:       { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: theme.border },
   detailLabel:     { fontSize: 13, color: theme.muted },
   detailValue:     { fontSize: 13, fontWeight: '600', color: theme.text, textAlign: 'right', flex: 1, marginLeft: 12 },

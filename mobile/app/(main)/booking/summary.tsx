@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ImageBackground } from 'react-native';
+import { useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +9,7 @@ import { useBookingStore } from '../../../store/useBookingStore';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { useThemeColor } from '../../../hooks/useThemeColor';
 import Toast from 'react-native-toast-message';
+import { ArrowLeft, Map, BusFront, ClipboardList, Tag, Armchair, Wallet, User, ArrowRight } from 'lucide-react-native';
 
 export default function BookingSummaryScreen() {
   const { t }    = useTranslation();
@@ -28,6 +30,8 @@ export default function BookingSummaryScreen() {
   // Strip shift suffix (e.g. '2026-05-27Tnight' -> '2026-05-27')
   const displayDate = travelDate?.length > 10 ? travelDate.slice(0, 10) : travelDate;
 
+  const submittingRef = useRef(false);
+
   const { mutate: confirmBooking, isPending } = useMutation({
    mutationFn: () => bookingService.create({
   schedule_id: selectedSchedule?.id,
@@ -41,6 +45,7 @@ export default function BookingSummaryScreen() {
       router.push('/(main)/payment/method');
     },
     onError: (err: any) => {
+      submittingRef.current = false;
       Toast.show({ type: 'error', text1: err?.response?.data?.message ?? t('errors.server') });
     },
   });
@@ -54,17 +59,21 @@ export default function BookingSummaryScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
+      <ImageBackground source={require('../../../assets/bgimage.jpg')} style={styles.header} resizeMode="cover">
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(10,20,50,0.72)' }} pointerEvents="none" />
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <ArrowLeft size={26} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>{t('booking.summary_title')}</Text>
-      </LinearGradient>
+      </ImageBackground>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Journey Card */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>🗺️ Journey Details</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+            <Map size={18} color={theme.text} />
+            <Text style={[styles.cardTitle, { marginBottom: 0 }]}>Journey Details</Text>
+          </View>
           <View style={styles.journeyVisual}>
             <View style={styles.journeyCity}>
               <Text style={styles.journeyCityName}>{fromCity?.name}</Text>
@@ -72,7 +81,7 @@ export default function BookingSummaryScreen() {
             </View>
             <View style={styles.journeyMiddle}>
               <Text style={styles.journeyTime}>{selectedSchedule?.departure_time?.slice(0,5)}</Text>
-              <View style={styles.journeyLine}><View style={styles.journeyBus}><Text>🚌</Text></View></View>
+              <View style={styles.journeyLine}><View style={styles.journeyBus}><BusFront size={16} color={theme.muted} /></View></View>
               <Text style={styles.journeyDuration}>
                 {selectedSchedule?.estimated_duration_minutes
                   ? `${Math.floor(selectedSchedule.estimated_duration_minutes/60)}h${selectedSchedule.estimated_duration_minutes%60 > 0 ? selectedSchedule.estimated_duration_minutes%60+'m' : ''}`
@@ -88,7 +97,10 @@ export default function BookingSummaryScreen() {
 
         {/* Trip Details */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>📋 Trip Information</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+            <ClipboardList size={18} color={theme.text} />
+            <Text style={[styles.cardTitle, { marginBottom: 0 }]}>Trip Information</Text>
+          </View>
           <Row label={t('booking.travel_date')}    value={displayDate} />
           <Row label={t('booking.departure_time')} value={selectedSchedule?.departure_time?.slice(0,5) ?? '--'} />
           <Row label="Company"                     value={selectedSchedule?.company_name ?? ''} />
@@ -96,7 +108,10 @@ export default function BookingSummaryScreen() {
           <Row label="Plate No."                   value={selectedSchedule?.plate_number ?? ''} />
           {/* Bus Signature — most important for finding the bus at the park */}
           <View style={styles.sigRow}>
-            <Text style={styles.sigRowLabel}>🏷️ Your Bus ID</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Tag size={16} color={theme.text} />
+              <Text style={styles.sigRowLabel}>Your Bus ID</Text>
+            </View>
             <View style={styles.sigBox}>
               <Text style={styles.sigBoxText}>{selectedSchedule?.bus_signature ?? selectedSchedule?.plate_number ?? '--'}</Text>
             </View>
@@ -106,7 +121,10 @@ export default function BookingSummaryScreen() {
 
         {/* Seats */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>💺 Selected Seats</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+            <Armchair size={18} color={theme.text} />
+            <Text style={[styles.cardTitle, { marginBottom: 0 }]}>Selected Seats</Text>
+          </View>
           <View style={styles.seatsWrap}>
             {selectedSeats.map(s => (
               <View key={s.id} style={[styles.seatChip, s.seat_type === 'vip' && styles.vipChip]}>
@@ -120,7 +138,10 @@ export default function BookingSummaryScreen() {
 
         {/* Price Breakdown */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>💰 Price Breakdown</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+            <Wallet size={18} color={theme.text} />
+            <Text style={[styles.cardTitle, { marginBottom: 0 }]}>Price Breakdown</Text>
+          </View>
           <Row label={t('booking.price_per_seat')} value={`${pricePerSeat.toLocaleString()} XAF`} />
           <Row label="Seats"                        value={String(selectedSeats.length)} />
           <Row label="Subtotal"                     value={`${subtotal.toLocaleString()} XAF`} />
@@ -131,7 +152,10 @@ export default function BookingSummaryScreen() {
 
         {/* Passenger */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>👤 Passenger</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+            <User size={18} color={theme.text} />
+            <Text style={[styles.cardTitle, { marginBottom: 0 }]}>Passenger</Text>
+          </View>
           <Row label="Name"  value={user?.full_name ?? ''} />
           <Row label="Phone" value={user?.phone ?? ''} />
         </View>
@@ -146,20 +170,27 @@ export default function BookingSummaryScreen() {
         <TouchableOpacity
           style={[styles.confirmBtn, isPending && { opacity: 0.7 }]}
           onPress={() => {
+            if (submittingRef.current || isPending) return;
             if (!user) {
               Toast.show({ type: 'info', text1: 'Login Required', text2: 'Please login to confirm your booking.' });
               router.push('/(auth)/login');
               return;
             }
+            submittingRef.current = true;
             confirmBooking();
           }}
           disabled={Boolean(isPending)}
           activeOpacity={0.85}
         >
           <LinearGradient colors={theme.gradientPrimary} style={styles.confirmBtnInner}>
-            <Text style={styles.confirmBtnText}>
-              {isPending ? t('common.loading') : t('booking.confirm_booking')} →
-            </Text>
+            {isPending ? (
+              <Text style={styles.confirmBtnText}>{t('common.loading')}</Text>
+            ) : (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={styles.confirmBtnText}>{t('booking.confirm_booking')}</Text>
+                <ArrowRight size={18} color="#fff" />
+              </View>
+            )}
           </LinearGradient>
         </TouchableOpacity>
       </View>
@@ -171,7 +202,6 @@ const getStyles = (theme: any) => StyleSheet.create({
   container:        { flex: 1, backgroundColor: theme.background },
   header:           { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 24 },
   backBtn:          { marginBottom: 12 },
-  backText:         { fontSize: 26, color: '#fff' },
   title:            { fontSize: 24, fontWeight: '800', color: '#fff' },
   scroll:           { padding: 16, gap: 14, paddingBottom: 120 },
   card:             { backgroundColor: theme.card, borderRadius: 20, padding: 20, shadowColor:'#000', shadowOffset:{width:0,height:4}, shadowOpacity:0.07, shadowRadius:12, elevation:4 },

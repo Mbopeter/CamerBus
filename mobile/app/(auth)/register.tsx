@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
-  ScrollView, KeyboardAvoidingView, Platform,
+  ScrollView, KeyboardAvoidingView, Platform, Image, Dimensions, ImageBackground,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -10,6 +10,9 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { useLanguageStore } from '../../store/useLanguageStore';
 import { useThemeColor } from '../../hooks/useThemeColor';
 import Toast from 'react-native-toast-message';
+import { User, Smartphone, Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react-native';
+
+const { width } = Dimensions.get('window');
 
 export default function RegisterScreen() {
   const { t }        = useTranslation();
@@ -42,28 +45,37 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
+    <ImageBackground source={require('../../assets/login&regiterbgimg.jpg')} style={{ flex: 1 }} resizeMode="cover">
+      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.6)' }]} />
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+          <LinearGradient colors={['rgba(0,0,0,0.3)', 'transparent']} style={styles.header}>
           <View style={styles.circle1} />
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <Text style={styles.backText}>← {t('common.back')}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <ArrowLeft size={16} color="rgba(255,255,255,0.85)" />
+              <Text style={styles.backText}>{t('common.back')}</Text>
+            </View>
           </TouchableOpacity>
-          <Text style={styles.logo}>🚌 CamerBus</Text>
+          <Image
+            source={require('../../assets/dark.logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={styles.title}>{t('auth.create_account')}</Text>
           <Text style={styles.subtitle}>{t('auth.register_subtitle')}</Text>
         </LinearGradient>
 
         <View style={styles.card}>
           {[
-            { key: 'full_name', label: t('auth.full_name'), icon: '👤', placeholder: 'Jean-Pierre Mbarga', keyboard: 'default' as const },
-            { key: 'phone',     label: t('auth.phone'),     icon: '📱', placeholder: '677123456',          keyboard: 'phone-pad' as const },
-            { key: 'email',     label: t('auth.email'),     icon: '✉️',  placeholder: 'email@example.com',  keyboard: 'email-address' as const },
+            { key: 'full_name', label: t('auth.full_name'), icon: <User size={18} color={theme.textLight} />, placeholder: 'Jean-Pierre Mbarga', keyboard: 'default' as const },
+            { key: 'phone',     label: t('auth.phone'),     icon: <Smartphone size={18} color={theme.textLight} />, placeholder: '677123456',          keyboard: 'phone-pad' as const },
+            { key: 'email',     label: t('auth.email'),     icon: <Mail size={18} color={theme.textLight} />,  placeholder: 'email@example.com',  keyboard: 'email-address' as const },
           ].map(({ key, label, icon, placeholder, keyboard }) => (
             <View key={key} style={styles.inputGroup}>
               <Text style={styles.label}>{label}</Text>
               <View style={styles.inputWrap}>
-                <Text style={styles.prefix}>{icon}</Text>
+                <View style={{ marginRight: 8 }}>{icon}</View>
                 <TextInput
                   style={styles.input}
                   placeholder={placeholder}
@@ -80,11 +92,11 @@ export default function RegisterScreen() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>{t('auth.password')}</Text>
             <View style={styles.inputWrap}>
-              <Text style={styles.prefix}>🔒</Text>
+              <View style={{ marginRight: 8 }}><Lock size={18} color={theme.textLight} /></View>
               <TextInput style={styles.input} placeholder="••••••••" secureTextEntry={!showPass}
                 value={form.password} onChangeText={v => update('password', v)} placeholderTextColor={theme.muted} />
               <TouchableOpacity onPress={() => setShowPass(!showPass)}>
-                <Text>{showPass ? '🙈' : '👁️'}</Text>
+                {showPass ? <EyeOff size={20} color={theme.muted} /> : <Eye size={20} color={theme.muted} />}
               </TouchableOpacity>
             </View>
           </View>
@@ -92,7 +104,7 @@ export default function RegisterScreen() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>{t('auth.confirm_password')}</Text>
             <View style={styles.inputWrap}>
-              <Text style={styles.prefix}>🔒</Text>
+              <View style={{ marginRight: 8 }}><Lock size={18} color={theme.textLight} /></View>
               <TextInput style={styles.input} placeholder="••••••••" secureTextEntry
                 value={form.confirmPassword} onChangeText={v => update('confirmPassword', v)} placeholderTextColor={theme.muted} />
             </View>
@@ -115,22 +127,23 @@ export default function RegisterScreen() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 
 const getStyles = (theme: any) => StyleSheet.create({
-  header:     { paddingTop: 60, paddingBottom: 50, paddingHorizontal: 28, overflow: 'hidden' },
+  header:     { paddingTop: 52, paddingBottom: 32, paddingHorizontal: 20, overflow: 'hidden', alignItems: 'center' },
   circle1:    { position:'absolute', width:220, height:220, borderRadius:110, backgroundColor:'rgba(255,255,255,0.06)', top:-80, right:-80 },
-  backBtn:    { marginBottom: 20 },
+  backBtn:    { alignSelf: 'flex-start', marginBottom: 8 },
   backText:   { color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: '600' },
-  logo:       { fontSize: 22, color: '#fff', fontWeight: '700', marginBottom: 12 },
-  title:      { fontSize: 30, fontWeight: '800', color: '#fff', marginBottom: 6 },
-  subtitle:   { fontSize: 14, color: 'rgba(255,255,255,0.75)' },
-  card:       { backgroundColor: theme.card, margin:20, borderRadius:24, padding:28, marginTop:-30, shadowColor:'#000', shadowOffset:{width:0,height:8}, shadowOpacity:0.12, shadowRadius:24, elevation:10 },
+  logoImage:  { width: width * 0.72, height: width * 0.54, marginBottom: 8 },
+  title:      { fontSize: 28, fontWeight: '800', color: '#fff', marginBottom: 5, textAlign: 'center' },
+  subtitle:   { fontSize: 14, color: 'rgba(255,255,255,0.9)', textAlign: 'center' },
+  card:       { backgroundColor: theme.card, margin:20, borderRadius:24, padding:28, marginTop:-10, shadowColor:'#000', shadowOffset:{width:0,height:8}, shadowOpacity:0.3, shadowRadius:24, elevation:10 },
   inputGroup: { marginBottom: 16 },
   label:      { fontSize: 12, fontWeight: '700', color: theme.textLight, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
-  inputWrap:  { flexDirection:'row', alignItems:'center', backgroundColor: theme.background, borderRadius:14, borderWidth:1.5, borderColor:theme.border, paddingHorizontal:14, height:52 },
-  prefix:     { fontSize: 16, marginRight: 8 },
+  inputWrap:  { flexDirection:'row', alignItems:'center', backgroundColor: theme.background, borderRadius: 14, borderWidth: 1.5, borderColor: theme.border, paddingHorizontal: 14, height: 50 },
+  prefix:     { fontSize: 16, marginRight: 8, color: theme.text },
   input:      { flex:1, fontSize:16, color:theme.text },
   terms:      { fontSize: 12, color: theme.muted, textAlign: 'center', marginVertical: 16, lineHeight: 18 },
   btn:        { borderRadius: 16, overflow: 'hidden' },

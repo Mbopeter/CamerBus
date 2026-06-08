@@ -2,13 +2,14 @@ import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useThemeColor } from '../../hooks/useThemeColor';
+import { Home, Search, Ticket, Package, User } from 'lucide-react-native';
 
-function TabIcon({ emoji, label, focused }: { emoji: string; label: string; focused: boolean }) {
+function TabIcon({ icon: Icon, label, focused }: { icon: any; label: string; focused: boolean }) {
   const theme = useThemeColor();
   const styles = getStyles(theme);
   return (
     <View style={styles.tabIcon}>
-      <Text style={[styles.emoji, focused && styles.emojiFocused]}>{emoji}</Text>
+      <Icon size={24} color={focused ? theme.primary : theme.muted} strokeWidth={focused ? 2.5 : 2} />
       <Text style={[styles.tabLabel, focused && styles.tabLabelFocused]}>{label}</Text>
       {focused && <View style={styles.dot} />}
     </View>
@@ -32,23 +33,23 @@ export default function MainLayout() {
       {/* ── Visible tabs ── */}
       <Tabs.Screen
         name="home"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" label="Home" focused={focused} /> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon icon={Home} label="Home" focused={focused} /> }}
       />
       <Tabs.Screen
         name="search/index"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🔍" label="Search" focused={focused} /> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon icon={Search} label="Search" focused={focused} /> }}
       />
       <Tabs.Screen
         name="tickets/index"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🎫" label="Tickets" focused={focused} /> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon icon={Ticket} label="Tickets" focused={focused} /> }}
       />
       <Tabs.Screen
         name="parcels/index"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📦" label="Parcels" focused={focused} /> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon icon={Package} label="Parcels" focused={focused} /> }}
       />
       <Tabs.Screen
         name="profile/index"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="👤" label="Profile" focused={focused} /> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon icon={User} label="Profile" focused={focused} /> }}
       />
 
       {/* ── Hidden screens (part of tab navigator but no tab button) ── */}
@@ -87,8 +88,6 @@ const getStyles = (theme: any) => StyleSheet.create({
     elevation: 20,
   },
   tabIcon:          { alignItems: 'center', gap: 2, paddingTop: 4 },
-  emoji:            { fontSize: 22, opacity: 0.5 },
-  emojiFocused:     { opacity: 1 },
   tabLabel:         { fontSize: 10, color: theme.muted, fontWeight: '500' },
   tabLabelFocused:  { color: theme.primary, fontWeight: '700' },
   dot:              { width: 4, height: 4, borderRadius: 2, backgroundColor: theme.primary, marginTop: 2 },

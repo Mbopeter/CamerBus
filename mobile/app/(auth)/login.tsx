@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
-  ScrollView, KeyboardAvoidingView, Platform, Dimensions,
+  ScrollView, KeyboardAvoidingView, Platform, Dimensions, Image, ImageBackground,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -10,8 +10,10 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { useLanguageStore } from '../../store/useLanguageStore';
 import { useThemeColor } from '../../hooks/useThemeColor';
 import Toast from 'react-native-toast-message';
+import { Lock, Eye, EyeOff, ArrowRightLeft } from 'lucide-react-native';
 
 const { height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const { t }    = useTranslation();
@@ -37,10 +39,12 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView style={{ flex: 1 }} bounces={false}>
-        {/* Header */}
-        <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
+    <ImageBackground source={require('../../assets/login&regiterbgimg.jpg')} style={{ flex: 1 }} resizeMode="cover">
+      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.6)' }]} />
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView style={{ flex: 1 }} bounces={false}>
+          {/* Header */}
+          <LinearGradient colors={['rgba(0,0,0,0.3)', 'transparent']} style={styles.header}>
           <View style={styles.circle1} />
           <View style={styles.circle2} />
           {/* Language switcher */}
@@ -48,9 +52,13 @@ export default function LoginScreen() {
             <Text style={styles.langSwitchText}>
               {language === 'fr' ? '🇫🇷 Français' : '🇬🇧 English'}
             </Text>
-            <Text style={styles.langSwitchArrow}>⇄</Text>
+            <ArrowRightLeft size={16} color="rgba(255,255,255,0.8)" />
           </TouchableOpacity>
-          <Text style={styles.logo}>🚌 CamerBus</Text>
+          <Image
+            source={require('../../assets/dark.logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={styles.title}>{t('auth.welcome_back')}</Text>
           <Text style={styles.subtitle}>{t('auth.login_subtitle')}</Text>
         </LinearGradient>
@@ -75,7 +83,7 @@ export default function LoginScreen() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>{t('auth.password')}</Text>
             <View style={styles.inputWrap}>
-              <Text style={styles.prefix}>🔒</Text>
+              <View style={{ marginRight: 8 }}><Lock size={18} color={theme.textLight} /></View>
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
@@ -85,7 +93,7 @@ export default function LoginScreen() {
                 placeholderTextColor={theme.muted}
               />
               <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
-                <Text>{showPass ? '🙈' : '👁️'}</Text>
+                {showPass ? <EyeOff size={20} color={theme.muted} /> : <Eye size={20} color={theme.muted} />}
               </TouchableOpacity>
             </View>
           </View>
@@ -113,20 +121,21 @@ export default function LoginScreen() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 
 const getStyles = (theme: any) => StyleSheet.create({
-  header:       { paddingTop: 70, paddingBottom: 50, paddingHorizontal: 28, position: 'relative', overflow: 'hidden' },
+  header:       { paddingTop: 56, paddingBottom: 36, paddingHorizontal: 20, position: 'relative', overflow: 'hidden', alignItems: 'center' },
   circle1:      { position:'absolute', width:200, height:200, borderRadius:100, backgroundColor:'rgba(255,255,255,0.06)', top:-60, right:-60 },
   circle2:      { position:'absolute', width:140, height:140, borderRadius:70, backgroundColor:'rgba(252,209,22,0.08)', bottom:-40, left:-20 },
-  langSwitch:   { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-end', backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
+  langSwitch:   { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-end', backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
   langSwitchText:{ fontSize: 13, color: '#fff', fontWeight: '600' },
   langSwitchArrow:{ fontSize: 15, color: 'rgba(255,255,255,0.8)' },
-  logo:         { fontSize: 22, color: '#fff', fontWeight: '700', marginBottom: 16 },
-  title:        { fontSize: 32, fontWeight: '800', color: '#fff', marginBottom: 6 },
-  subtitle:     { fontSize: 15, color: 'rgba(255,255,255,0.75)' },
-  card:         { backgroundColor: theme.card, margin: 20, borderRadius: 24, padding: 28, marginTop: -30, shadowColor:'#000', shadowOffset:{width:0,height:8}, shadowOpacity:0.12, shadowRadius:24, elevation:10 },
+  logoImage:    { width: width * 0.72, height: width * 0.54, marginBottom: 8 },
+  title:        { fontSize: 30, fontWeight: '800', color: '#fff', marginBottom: 5, textAlign: 'center' },
+  subtitle:     { fontSize: 14, color: 'rgba(255,255,255,0.9)', textAlign: 'center' },
+  card:         { backgroundColor: theme.card, margin: 20, borderRadius: 24, padding: 28, marginTop: -10, shadowColor:'#000', shadowOffset:{width:0,height:8}, shadowOpacity:0.3, shadowRadius:24, elevation:10 },
   inputGroup:   { marginBottom: 18 },
   label:        { fontSize: 13, fontWeight: '600', color: theme.textLight, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
   inputWrap:    { flexDirection:'row', alignItems:'center', backgroundColor: theme.background, borderRadius: 14, borderWidth: 1.5, borderColor: theme.border, paddingHorizontal: 14, height: 54 },

@@ -1,10 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useBookingStore } from '../../../store/useBookingStore';
 import { useThemeColor } from '../../../hooks/useThemeColor';
 import { PAYMENT_METHODS } from '../../../constants/data';
+import { ArrowLeft, Info, Smartphone, CircleDot, Landmark } from 'lucide-react-native';
 
 export default function PaymentMethodScreen() {
   const { t }    = useTranslation();
@@ -30,17 +31,18 @@ export default function PaymentMethodScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
+      <ImageBackground source={require('../../../assets/bgimage.jpg')} style={styles.header} resizeMode="cover">
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(10,20,50,0.72)' }} pointerEvents="none" />
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <ArrowLeft size={26} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>{t('payment.title')}</Text>
         <Text style={styles.subtitle}>{t('payment.subtitle')}</Text>
-      </LinearGradient>
+      </ImageBackground>
 
       <View style={styles.content}>
         <View style={styles.infoBox}>
-          <Text style={styles.infoIcon}>ℹ️</Text>
+          <Info size={20} color={theme.primary} style={{ marginTop: 2 }} />
           <Text style={styles.infoText}>{t('payment.instruction')}</Text>
         </View>
 
@@ -52,9 +54,13 @@ export default function PaymentMethodScreen() {
             activeOpacity={0.85}
           >
             <View style={[styles.methodIconWrap, { backgroundColor: method.color + '22' }]}>
-              <Text style={{ fontSize: 28 }}>
-                {method.id === 'mtn_momo' ? '📱' : method.id === 'orange_money' ? '🟠' : '🏦'}
-              </Text>
+              {method.id === 'mtn_momo' ? (
+                <Smartphone size={28} color={method.color} />
+              ) : method.id === 'orange_money' ? (
+                <CircleDot size={28} color={method.color} />
+              ) : (
+                <Landmark size={28} color={method.color} />
+              )}
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.methodName}>{method.name}</Text>
@@ -76,12 +82,10 @@ const getStyles = (theme: any) => StyleSheet.create({
   container:          { flex: 1, backgroundColor: theme.background },
   header:             { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 30 },
   backBtn:            { marginBottom: 12 },
-  backText:           { fontSize: 26, color: '#fff' },
   title:              { fontSize: 26, fontWeight: '800', color: '#fff' },
   subtitle:           { fontSize: 14, color: 'rgba(255,255,255,0.75)', marginTop: 6 },
   content:            { flex: 1, padding: 20, gap: 14, marginTop: -16 },
   infoBox:            { backgroundColor: theme.primary + '15', borderRadius: 14, padding: 16, flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
-  infoIcon:           { fontSize: 20, marginTop: 2 },
   infoText:           { flex: 1, fontSize: 13, color: theme.text, lineHeight: 20 },
   methodCard:         { backgroundColor: theme.card, borderRadius: 20, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: 2, borderColor: 'transparent', shadowColor:'#000', shadowOffset:{width:0,height:4}, shadowOpacity:0.07, shadowRadius:12, elevation:4 },
   methodCardSelected: { borderColor: theme.primary, backgroundColor: theme.primary + '10' },

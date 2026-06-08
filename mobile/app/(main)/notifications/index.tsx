@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import { useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -6,15 +7,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationService } from '../../../services/endpoints';
 import { useLanguageStore } from '../../../store/useLanguageStore';
 import { useThemeColor } from '../../../hooks/useThemeColor';
+import { Ticket as TicketIcon, CheckCircle, XCircle, Bus, Package, PartyPopper, Info, Bell, MapPin, ArrowRight, ArrowLeft } from 'lucide-react-native';
 
-const TYPE_ICONS: Record<string, string> = {
-  booking_confirmed: '🎫',
-  payment_approved:  '✅',
-  payment_rejected:  '❌',
-  departure_reminder:'🚌',
-  parcel_update:     '📦',
-  ticket_ready:      '🎉',
-  general:           'ℹ️',
+const TYPE_ICONS: Record<string, any> = {
+  booking_confirmed: TicketIcon,
+  payment_approved:  CheckCircle,
+  payment_rejected:  XCircle,
+  departure_reminder: Bus,
+  parcel_update:     Package,
+  ticket_ready:      PartyPopper,
+  general:           Info,
 };
 
 const PARCEL_STATUS_LABELS: Record<string, { en: string; fr: string; color: string }> = {
@@ -94,18 +96,53 @@ export default function NotificationsScreen() {
               </View>
             )}
           </View>
-          <Text style={styles.tapHint}>📍 Tap to view full tracking →</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
+            <MapPin size={12} color={theme.muted} />
+            <Text style={[styles.tapHint, { marginTop: 0 }]}>Tap to view full tracking</Text>
+            <ArrowRight size={12} color={theme.muted} />
+          </View>
         </View>
       );
     } catch (_) {}
     return null;
   };
 
+  const renderNotificationItem = useCallback(({ item: n }: { item: any }) => (
+    <TouchableOpacity
+      style={[styles.notifCard, !n.is_read && styles.notifCardUnread]}
+      onPress={() => handlePress(n)}
+      activeOpacity={0.85}
+    >
+      <View style={styles.notifIcon}>
+        {TYPE_ICONS[n.type] ? (
+          (() => {
+            const Icon = TYPE_ICONS[n.type];
+            return <Icon size={22} color={theme.primary} />;
+          })()
+        ) : (
+          <Bell size={22} color={theme.primary} />
+        )}
+      </View>
+      <View style={styles.notifBody}>
+        <Text style={styles.notifTitle} numberOfLines={2}>
+          {language === 'fr' && n.title_fr ? n.title_fr : n.title}
+        </Text>
+        <Text style={styles.notifText} numberOfLines={3}>
+          {language === 'fr' && n.body_fr ? n.body_fr : n.body}
+        </Text>
+        {renderParcelBadge(n)}
+        <Text style={styles.notifTime}>{getTimeAgo(n.created_at)}</Text>
+      </View>
+      {!n.is_read && <View style={styles.unreadDot} />}
+    </TouchableOpacity>
+  ), [handlePress, language, theme, styles]);
+
   return (
     <View style={styles.container}>
-      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
+      <ImageBackground source={require('../../../assets/bgimage.jpg')} style={styles.header} resizeMode="cover">
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(10,20,50,0.72)' }} pointerEvents="none" />
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <ArrowLeft size={26} color="#fff" />
         </TouchableOpacity>
         <View style={styles.headerTop}>
           <Text style={styles.title}>{t('notifications.title')}</Text>
@@ -120,38 +157,21 @@ export default function NotificationsScreen() {
             <Text style={styles.unreadText}>{unread} unread</Text>
           </View>
         )}
-      </LinearGradient>
+      </ImageBackground>
 
       <FlatList
         data={notifications}
         keyExtractor={i => String(i.id)}
         contentContainerStyle={styles.list}
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        removeClippedSubviews={true}
         refreshControl={<RefreshControl refreshing={Boolean(isLoading)} onRefresh={refetch} tintColor={theme.primary} />}
-        renderItem={({ item: n }) => (
-          <TouchableOpacity
-            style={[styles.notifCard, !n.is_read && styles.notifCardUnread]}
-            onPress={() => handlePress(n)}
-            activeOpacity={0.85}
-          >
-            <View style={styles.notifIcon}>
-              <Text style={{ fontSize: 22 }}>{TYPE_ICONS[n.type] ?? '🔔'}</Text>
-            </View>
-            <View style={styles.notifBody}>
-              <Text style={styles.notifTitle} numberOfLines={2}>
-                {language === 'fr' && n.title_fr ? n.title_fr : n.title}
-              </Text>
-              <Text style={styles.notifText} numberOfLines={3}>
-                {language === 'fr' && n.body_fr ? n.body_fr : n.body}
-              </Text>
-              {renderParcelBadge(n)}
-              <Text style={styles.notifTime}>{getTimeAgo(n.created_at)}</Text>
-            </View>
-            {!n.is_read && <View style={styles.unreadDot} />}
-          </TouchableOpacity>
-        )}
+        renderItem={renderNotificationItem}
         ListEmptyComponent={!isLoading ? (
           <View style={styles.empty}>
-            <Text style={{ fontSize: 52 }}>🔔</Text>
+            <Bell size={52} color={theme.muted} />
             <Text style={styles.emptyText}>{t('notifications.empty')}</Text>
           </View>
         ) : null}
@@ -164,7 +184,6 @@ const getStyles = (theme: any) => StyleSheet.create({
   container:        { flex: 1, backgroundColor: theme.background },
   header:           { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 20 },
   backBtn:          { marginBottom: 10 },
-  backText:         { fontSize: 26, color: '#fff' },
   headerTop:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title:            { fontSize: 26, fontWeight: '800', color: '#fff' },
   markAllBtn:       { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 },

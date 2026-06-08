@@ -1,10 +1,14 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import { useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { bookingService } from '../../../services/endpoints';
 import { useAuthStore } from '../../../store/useAuthStore';
+import { getCompanyLogo } from '../../../utils/companyLogos';
+import { Image } from 'react-native';
+import { ArrowRight, Clock, Wallet, Ticket as TicketIcon } from 'lucide-react-native';
 import { useThemeColor } from '../../../hooks/useThemeColor';
 
 const getStatusColor = (theme: any, status: string) => {
@@ -31,70 +35,91 @@ export default function TicketsScreen() {
 
   const bookings: any[] = data ?? [];
 
+  const renderTicketItem = useCallback(({ item: bk }: { item: any }) => (
+    <TouchableOpacity style={styles.card}
+      onPress={() => router.push(`/(main)/tickets/${bk.booking_ref}` as any)} activeOpacity={0.85}>
+      {/* Status badge */}
+      <View style={styles.cardTop}>
+        <Text style={styles.refText}>{bk.booking_ref}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(theme, bk.status) + '20' }]}>
+          <Text style={[styles.statusText, { color: getStatusColor(theme, bk.status) }]}>
+            {bk.status.toUpperCase()}
+          </Text>
+        </View>
+      </View>
+
+      {/* Route */}
+      <View style={styles.routeRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.city}>{bk.origin_city}</Text>
+          <Text style={styles.branch}>{bk.origin_branch}</Text>
+        </View>
+        <View style={styles.routeArrowWrap}>
+          <ArrowRight size={20} color={theme.primary} />
+          <Text style={styles.travelDate}>{bk.travel_date}</Text>
+        </View>
+        <View style={{ flex: 1, alignItems: 'flex-end' }}>
+          <Text style={styles.city}>{bk.dest_city}</Text>
+          <Text style={styles.branch}>{bk.dest_branch}</Text>
+        </View>
+      </View>
+
+      {/* Meta */}
+      <View style={styles.cardMeta}>
+        <View style={styles.metaCompanyRow}>
+          <Image source={getCompanyLogo(bk.company_name)} style={styles.companyLogo} resizeMode="contain" />
+          <Text style={styles.metaText}>{bk.company_name}</Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Clock size={12} color={theme.textLight} />
+          <Text style={styles.metaText}>{bk.departure_time?.slice(0,5)}</Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Wallet size={12} color={theme.textLight} />
+          <Text style={styles.metaText}>{Number(bk.total_amount).toLocaleString()} XAF</Text>
+        </View>
+      </View>
+
+        <View style={styles.qrHint}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <TicketIcon size={14} color={theme.primary} />
+            <Text style={styles.qrHintText}>Tap to view QR Ticket</Text>
+          </View>
+          <ArrowRight size={14} color={theme.primary} />
+        </View>
+    </TouchableOpacity>
+  ), [router, styles, theme]);
+
   return (
     <View style={styles.container}>
-      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
+      <ImageBackground source={require('../../../assets/bgimage.jpg')} style={styles.header} resizeMode="cover">
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(10,20,50,0.72)' }} pointerEvents="none" />
         <Text style={styles.title}>{t('ticket.my_tickets')}</Text>
         <Text style={styles.subtitle}>Your travel bookings</Text>
-      </LinearGradient>
+      </ImageBackground>
 
       <FlatList
         data={bookings}
         keyExtractor={i => String(i.id)}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        removeClippedSubviews={true}
         refreshControl={<RefreshControl refreshing={Boolean(isLoading)} onRefresh={refetch} tintColor={theme.primary} />}
-        renderItem={({ item: bk }) => (
-          <TouchableOpacity style={styles.card}
-            onPress={() => router.push(`/(main)/tickets/${bk.booking_ref}` as any)} activeOpacity={0.85}>
-            {/* Status badge */}
-            <View style={styles.cardTop}>
-              <Text style={styles.refText}>{bk.booking_ref}</Text>
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(theme, bk.status) + '20' }]}>
-                <Text style={[styles.statusText, { color: getStatusColor(theme, bk.status) }]}>
-                  {bk.status.toUpperCase()}
-                </Text>
-              </View>
-            </View>
-
-            {/* Route */}
-            <View style={styles.routeRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.city}>{bk.origin_city}</Text>
-                <Text style={styles.branch}>{bk.origin_branch}</Text>
-              </View>
-              <View style={styles.routeArrowWrap}>
-                <Text style={styles.routeArrow}>→</Text>
-                <Text style={styles.travelDate}>{bk.travel_date}</Text>
-              </View>
-              <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                <Text style={styles.city}>{bk.dest_city}</Text>
-                <Text style={styles.branch}>{bk.dest_branch}</Text>
-              </View>
-            </View>
-
-            {/* Meta */}
-            <View style={styles.cardMeta}>
-              <Text style={styles.metaText}>🚌 {bk.company_name}</Text>
-              <Text style={styles.metaText}>⏰ {bk.departure_time?.slice(0,5)}</Text>
-              <Text style={styles.metaText}>💰 {Number(bk.total_amount).toLocaleString()} XAF</Text>
-            </View>
-
-            {bk.status === 'confirmed' && (
-              <View style={styles.qrHint}>
-                <Text style={styles.qrHintText}>🎫 Tap to view QR Ticket</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        )}
+        renderItem={renderTicketItem}
         ListEmptyComponent={!isLoading ? (
           <View style={styles.empty}>
-            <Text style={{ fontSize: 52 }}>🎫</Text>
+            <TicketIcon size={52} color={theme.muted} />
             <Text style={styles.emptyTitle}>{t('ticket.no_tickets')}</Text>
             <Text style={styles.emptySub}>{t('ticket.no_tickets_subtitle')}</Text>
             <TouchableOpacity style={styles.bookBtn} onPress={() => router.push('/(main)/home')}>
               <LinearGradient colors={theme.gradientPrimary} style={styles.bookBtnInner}>
-                <Text style={styles.bookBtnText}>Book a Trip →</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={styles.bookBtnText}>Book a Trip</Text>
+                  <ArrowRight size={18} color="#fff" />
+                </View>
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -119,9 +144,10 @@ const getStyles = (theme: any) => StyleSheet.create({
   city:           { fontSize: 17, fontWeight: '800', color: theme.text },
   branch:         { fontSize: 11, color: theme.muted, marginTop: 3 },
   routeArrowWrap: { flex: 1, alignItems: 'center' },
-  routeArrow:     { fontSize: 20, color: theme.primary, fontWeight: '800' },
   travelDate:     { fontSize: 11, color: theme.muted, marginTop: 4 },
-  cardMeta:       { flexDirection: 'row', gap: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.border, flexWrap: 'wrap' },
+  cardMeta:       { flexDirection: 'row', gap: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.border, flexWrap: 'wrap', alignItems: 'center' },
+  metaCompanyRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  companyLogo:    { width: 20, height: 20, borderRadius: 4 },
   metaText:       { fontSize: 12, color: theme.textLight, fontWeight: '600' },
   qrHint:         { backgroundColor: theme.primary + '15', borderRadius: 10, padding: 10, marginTop: 10, alignItems: 'center' },
   qrHintText:     { fontSize: 13, color: theme.primary, fontWeight: '700' },

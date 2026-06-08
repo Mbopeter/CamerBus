@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert, TextInput, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,7 @@ import { paymentService, bookingService } from '../../../services/endpoints';
 import { useBookingStore } from '../../../store/useBookingStore';
 import { useThemeColor } from '../../../hooks/useThemeColor';
 import Toast from 'react-native-toast-message';
+import { ArrowLeft, User as UserIcon, ReceiptText, Camera, Check, ArrowRight } from 'lucide-react-native';
 
 export default function UploadProofScreen() {
   const { t } = useTranslation();
@@ -95,18 +96,22 @@ export default function UploadProofScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
+      <ImageBackground source={require('../../../assets/bgimage.jpg')} style={styles.header} resizeMode="cover">
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(10,20,50,0.72)' }} pointerEvents="none" />
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <ArrowLeft size={26} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Finish Booking</Text>
         <Text style={styles.subtitle}>Provide passenger details and upload your payment receipt to generate your ticket.</Text>
-      </LinearGradient>
+      </ImageBackground>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         
         {/* Passenger Details Section */}
-        <Text style={styles.sectionTitle}>👤 Passenger Details</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <UserIcon size={18} color={theme.text} />
+          <Text style={[styles.sectionTitle, { marginLeft: 0 }]}>Passenger Details</Text>
+        </View>
         {passengers.map((p, index) => (
           <View key={p.seat_id} style={styles.card}>
             <View style={styles.cardHeader}>
@@ -153,13 +158,16 @@ export default function UploadProofScreen() {
         ))}
 
         {/* Upload Receipt Section */}
-        <Text style={[styles.sectionTitle, { marginTop: 10 }]}>🧾 Payment Receipt</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 }}>
+          <ReceiptText size={18} color={theme.text} />
+          <Text style={[styles.sectionTitle, { marginLeft: 0 }]}>Payment Receipt</Text>
+        </View>
         <TouchableOpacity style={styles.uploadArea} onPress={pickImage} activeOpacity={0.8}>
           {image ? (
             <Image source={{ uri: image.uri }} style={styles.previewImage} resizeMode="cover" />
           ) : (
             <View style={styles.uploadPlaceholder}>
-              <Text style={styles.uploadIcon}>📸</Text>
+              <Camera size={52} color={theme.muted} />
               <Text style={styles.uploadText}>{t('payment.choose_screenshot')}</Text>
               <Text style={styles.uploadSub}>JPG, PNG up to 5MB</Text>
             </View>
@@ -168,7 +176,10 @@ export default function UploadProofScreen() {
 
         {image && (
           <View style={styles.imageInfo}>
-            <Text style={styles.imageInfoText}>✅ {image.name}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Check size={16} color={theme.primary} />
+              <Text style={styles.imageInfoText}>{image.name}</Text>
+            </View>
             <TouchableOpacity onPress={() => setImage(null)}>
               <Text style={styles.removeText}>Remove</Text>
             </TouchableOpacity>
@@ -185,9 +196,14 @@ export default function UploadProofScreen() {
           activeOpacity={0.85}
         >
           <LinearGradient colors={theme.gradientPrimary} style={styles.submitBtnInner}>
-            <Text style={styles.submitBtnText}>
-              {isPending ? t('common.loading') : 'Submit & Generate Ticket →'}
-            </Text>
+            {isPending ? (
+              <Text style={styles.submitBtnText}>{t('common.loading')}</Text>
+            ) : (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={styles.submitBtnText}>Submit & Generate Ticket</Text>
+                <ArrowRight size={18} color="#fff" />
+              </View>
+            )}
           </LinearGradient>
         </TouchableOpacity>
       </View>
@@ -199,7 +215,6 @@ const getStyles = (theme: any) => StyleSheet.create({
   container:       { flex: 1, backgroundColor: theme.background },
   header:          { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 28 },
   backBtn:         { marginBottom: 12 },
-  backText:        { fontSize: 26, color: '#fff' },
   title:           { fontSize: 24, fontWeight: '800', color: '#fff' },
   subtitle:        { fontSize: 13, color: 'rgba(255,255,255,0.85)', marginTop: 6, lineHeight: 20 },
   scroll:          { padding: 16, gap: 16, paddingBottom: 120 },
@@ -214,7 +229,6 @@ const getStyles = (theme: any) => StyleSheet.create({
   input:           { borderWidth: 1, borderColor: theme.border, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: theme.text, backgroundColor: theme.background },
   uploadArea:      { borderRadius: 20, borderWidth: 2, borderColor: theme.border, borderStyle: 'dashed', overflow: 'hidden', minHeight: 220, backgroundColor: theme.card },
   uploadPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, minHeight: 220, gap: 10 },
-  uploadIcon:      { fontSize: 52 },
   uploadText:      { fontSize: 17, fontWeight: '700', color: theme.text },
   uploadSub:       { fontSize: 13, color: theme.muted },
   previewImage:    { width: '100%', height: 280 },

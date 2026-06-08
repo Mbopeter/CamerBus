@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Dimensions, Animated,
+  Dimensions, Animated, Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useLanguageStore } from '../store/useLanguageStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeColor } from '../hooks/useThemeColor';
+import { ArrowRight, Check } from 'lucide-react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -68,12 +69,11 @@ export default function OnboardingScreen() {
 
       {/* Logo section */}
       <View style={styles.logoSection}>
-        <View style={styles.logoRing}>
-          <LinearGradient colors={['#FCD116', '#F59E0B']} style={styles.logoBg}>
-            <Text style={styles.logoEmoji}>🚌</Text>
-          </LinearGradient>
-        </View>
-        <Text style={styles.appName}>CamerBus</Text>
+        <Image
+          source={require('../assets/dark.logo.png')}
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
         <View style={styles.taglineWrap}>
           <Text style={styles.taglineEn}>Cameroon's Transport Super-App</Text>
           <Text style={styles.taglineFr}>L'Application de Transport du Cameroun</Text>
@@ -115,7 +115,7 @@ export default function OnboardingScreen() {
 
                 {/* Right: arrow / check */}
                 <View style={[styles.arrowBubble, isActive && { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
-                  <Text style={styles.arrowText}>{isActive ? '✓' : '→'}</Text>
+                  {isActive ? <Check size={20} color="#fff" strokeWidth={3} /> : <ArrowRight size={20} color="#fff" />}
                 </View>
               </LinearGradient>
             </TouchableOpacity>
@@ -138,11 +138,8 @@ const styles = StyleSheet.create({
   glow1:          { position: 'absolute', width: 300, height: 300, borderRadius: 150, backgroundColor: 'rgba(252,209,22,0.06)', top: -100, right: -100 },
   glow2:          { position: 'absolute', width: 250, height: 250, borderRadius: 125, backgroundColor: 'rgba(37,99,235,0.07)', bottom: 60, left: -80 },
 
-  logoSection:    { alignItems: 'center', gap: 14, paddingTop: 64, paddingHorizontal: 24 },
-  logoRing:       { width: 110, height: 110, borderRadius: 35, padding: 4, backgroundColor: 'rgba(252,209,22,0.15)', borderWidth: 1.5, borderColor: 'rgba(252,209,22,0.3)', alignItems: 'center', justifyContent: 'center' },
-  logoBg:         { width: 92, height: 92, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
-  logoEmoji:      { fontSize: 50 },
-  appName:        { fontSize: 44, fontWeight: '900', color: '#FFFFFF', letterSpacing: 1 },
+  logoSection:    { alignItems: 'center', gap: 2, paddingTop: 40, paddingHorizontal: 12 },
+  logoImage:      { width: width * 0.88, height: width * 0.72 },
   taglineWrap:    { alignItems: 'center', gap: 4 },
   taglineEn:      { fontSize: 14, color: 'rgba(255,255,255,0.65)', fontWeight: '500' },
   taglineFr:      { fontSize: 13, color: 'rgba(255,255,255,0.45)' },
@@ -160,7 +157,6 @@ const styles = StyleSheet.create({
   langName:       { fontSize: 22, fontWeight: '800', color: '#FFFFFF', marginBottom: 2 },
   langSub:        { fontSize: 13, color: 'rgba(255,255,255,0.5)', fontWeight: '500' },
   arrowBubble:    { width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
-  arrowText:      { fontSize: 18, color: '#fff', fontWeight: '700' },
 
   footer:         { paddingBottom: 32, alignItems: 'center' },
   footerText:     { fontSize: 13, color: 'rgba(255,255,255,0.35)', fontWeight: '500' },

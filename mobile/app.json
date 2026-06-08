@@ -4,13 +4,13 @@
     "slug": "camerbus",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/dark.logo.png",
     "scheme": "camerbus",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/dark.logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#007A33"
+      "backgroundColor": "#1a0533"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -21,8 +21,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#007A33"
+        "foregroundImage": "./assets/dark.logo.png",
+        "backgroundColor": "#1a0533"
       },
       "package": "cm.camerbus.app",
       "permissions": [
@@ -36,7 +36,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/dark.logo.png"
     },
     "plugins": [
       "expo-router",
@@ -55,8 +55,8 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/icon.png",
-          "color": "#007A33"
+          "icon": "./assets/dark.logo.png",
+          "color": "#6B21A8"
         }
       ],
       "expo-font",
@@ -67,13 +67,20 @@
       "typedRoutes": true
     },
    "extra": {
-  "API_BASE_URL": "http://192.168.88.34:8000",
+  "API_BASE_URL": "http://172.20.10.2:8000",
   "eas": {
     "projectId": "your-eas-project-id"
   }
 }
   }
     }
+
+
+
+
+
+
+
 
 
 

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { bookingService } from '../../../services/endpoints';
 import { useThemeColor } from '../../../hooks/useThemeColor';
 import { useBookingStore } from '../../../store/useBookingStore';
+import { Ticket as TicketIcon, ArrowLeft, CheckCircle, AlertTriangle, Clock, ArrowRight, Share as ShareIcon } from 'lucide-react-native';
 
 export default function TicketDetailScreen() {
   const { code }  = useLocalSearchParams<{ code: string }>();
@@ -26,7 +27,7 @@ export default function TicketDetailScreen() {
   if (isLoading || !booking) {
     return (
       <View style={styles.loading}>
-        <Text style={{ fontSize: 48 }}>🎫</Text>
+        <TicketIcon size={48} color={theme.muted} />
         <Text style={{ color: theme.muted, fontSize: 16, marginTop: 12 }}>{t('common.loading')}</Text>
       </View>
     );
@@ -56,23 +57,25 @@ export default function TicketDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
+      <ImageBackground source={require('../../../assets/bgimage.jpg')} style={styles.header} resizeMode="cover">
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(10,20,50,0.72)' }} pointerEvents="none" />
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <ArrowLeft size={26} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('ticket.title')}</Text>
-        <View style={[styles.statusBadge, { backgroundColor: isValid ? theme.success + '20' : theme.danger + '20' }]}>
+        <View style={[styles.statusBadge, { backgroundColor: isValid ? theme.success + '20' : theme.danger + '20', flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+          {isValid && <CheckCircle size={14} color={theme.success} />}
           <Text style={[styles.statusText, { color: isValid ? theme.success : theme.danger }]}>
-            {isValid ? '✅ ' + t('ticket.status_valid') : booking.status.toUpperCase()}
+            {isValid ? t('ticket.status_valid') : booking.status.toUpperCase()}
           </Text>
         </View>
-      </LinearGradient>
+      </ImageBackground>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* QR Code Card */}
         {needsInfo ? (
           <View style={[styles.pendingCard, { borderColor: theme.danger, borderWidth: 2 }]}>
-            <Text style={[styles.pendingIcon, { color: theme.danger }]}>⚠️</Text>
+            <AlertTriangle size={52} color={theme.danger} />
             <Text style={[styles.pendingText, { color: theme.text }]}>
               Passenger information is missing. You must provide ID details for all passengers before your ticket is generated.
             </Text>
@@ -106,7 +109,7 @@ export default function TicketDetailScreen() {
           </View>
         ) : (
           <View style={styles.pendingCard}>
-            <Text style={styles.pendingIcon}>⏳</Text>
+            <Clock size={52} color={theme.muted} />
             <Text style={styles.pendingText}>
               {payment?.status === 'pending' ? t('payment.pending_title') : 'Ticket not yet generated'}
             </Text>
@@ -122,7 +125,7 @@ export default function TicketDetailScreen() {
             </View>
             <View style={styles.routeMid}>
               <Text style={styles.time}>{booking.departure_time?.slice(0,5)}</Text>
-              <Text style={styles.arrow}>✈️</Text>
+              <ArrowRight size={22} color={theme.muted} />
               <Text style={styles.date}>{booking.travel_date}</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
@@ -147,7 +150,10 @@ export default function TicketDetailScreen() {
         {/* Share */}
         {isValid && (
           <TouchableOpacity style={styles.shareBtn} onPress={handleShare} activeOpacity={0.85}>
-            <Text style={styles.shareBtnText}>📤 Share Ticket</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <ShareIcon size={18} color={theme.primary} />
+              <Text style={styles.shareBtnText}>Share Ticket</Text>
+            </View>
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -160,7 +166,6 @@ const getStyles = (theme: any) => StyleSheet.create({
   loading:         { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.background },
   header:          { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 24, gap: 8 },
   backBtn:         { marginBottom: 8 },
-  backText:        { fontSize: 26, color: '#fff' },
   headerTitle:     { fontSize: 24, fontWeight: '800', color: '#fff' },
   statusBadge:     { alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20 },
   statusText:      { fontSize: 13, fontWeight: '800' },
@@ -172,7 +177,6 @@ const getStyles = (theme: any) => StyleSheet.create({
   ticketCode:      { textAlign: 'center', fontSize: 16, fontWeight: '800', color: theme.text, letterSpacing: 3, paddingBottom: 20 },
   dottedLine:      { borderTopWidth: 2, borderStyle: 'dashed', borderColor: theme.border, marginHorizontal: 20, marginBottom: 16 },
   pendingCard:     { backgroundColor: theme.card, borderRadius: 20, padding: 32, alignItems: 'center', gap: 12, shadowColor:'#000', shadowOffset:{width:0,height:4}, shadowOpacity:0.07, shadowRadius:12, elevation:4 },
-  pendingIcon:     { fontSize: 52 },
   pendingText:     { fontSize: 16, color: theme.muted, textAlign: 'center', fontWeight: '600' },
   detailCard:      { backgroundColor: theme.card, borderRadius: 20, padding: 20, shadowColor:'#000', shadowOffset:{width:0,height:4}, shadowOpacity:0.07, shadowRadius:12, elevation:4 },
   routeRow:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -180,7 +184,6 @@ const getStyles = (theme: any) => StyleSheet.create({
   branch:          { fontSize: 11, color: theme.muted, marginTop: 3 },
   routeMid:        { alignItems: 'center', gap: 4 },
   time:            { fontSize: 16, fontWeight: '700', color: theme.primary },
-  arrow:           { fontSize: 22 },
   date:            { fontSize: 12, color: theme.muted },
   infoCard:        { backgroundColor: theme.card, borderRadius: 20, padding: 20, shadowColor:'#000', shadowOffset:{width:0,height:4}, shadowOpacity:0.07, shadowRadius:12, elevation:4 },
   row:             { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: theme.border },

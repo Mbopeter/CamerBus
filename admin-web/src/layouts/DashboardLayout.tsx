@@ -4,6 +4,7 @@ import {
   LayoutDashboard, Building2, Map, Users, Bus, CheckSquare,
   Package, LogOut, CalendarDays, Ticket, Bell
 } from 'lucide-react';
+import darkLogo from '../assets/dark.logo.png';
 import '../index.css';
 
 export default function DashboardLayout() {
@@ -44,8 +45,7 @@ export default function DashboardLayout() {
       {/* Sidebar */}
       <aside className="sidebar glass">
         <div className="sidebar-header">
-          <div className="logo-box">C</div>
-          <span className="logo-text">CamerBus</span>
+          <img src={darkLogo} alt="CamerBus" className="sidebar-logo" />
         </div>
 
         <div className="sidebar-nav">

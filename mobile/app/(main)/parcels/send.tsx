@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, KeyboardAvoidingView, Platform, Switch,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  TextInput, KeyboardAvoidingView, Platform, Switch, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -10,12 +8,20 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { parcelService, companyService } from '../../../services/endpoints';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { useThemeColor } from '../../../hooks/useThemeColor';
+import { getCompanyLogo } from '../../../utils/companyLogos';
+import { Image } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { ArrowLeft, User as UserIcon, Inbox, Package, AlertTriangle, BusFront } from 'lucide-react-native';
 
-const Section = ({ title }: { title: string }) => {
+const Section = ({ title, icon }: { title: string; icon?: React.ReactNode }) => {
   const theme = useThemeColor();
   const styles = getStyles(theme);
-  return <Text style={styles.sectionTitle}>{title}</Text>;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+      {icon}
+      <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>{title}</Text>
+    </View>
+  );
 };
 
 const Field = ({ label, value, onChangeText, placeholder, keyboardType = 'default' as any, multiline = false }: any) => {
@@ -77,7 +83,7 @@ export default function SendParcelScreen() {
     mutationFn: () => parcelService.create({ ...form, weight_kg: parseFloat(form.weight_kg) || 1, is_fragile: form.is_fragile ? 1 : 0 }),
     onSuccess: (res) => {
       const { tracking_number, shipping_cost } = res.data.data;
-      Toast.show({ type: 'success', text1: '📦 Parcel Created!', text2: `Tracking: ${tracking_number}` });
+      Toast.show({ type: 'success', text1: 'Parcel Created!', text2: `Tracking: ${tracking_number}` });
       router.push(`/(main)/tracking/${tracking_number}` as any);
     },
     onError: (err: any) => {
@@ -88,49 +94,54 @@ export default function SendParcelScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.container}>
-        <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
+        <ImageBackground source={require('../../../assets/bgimage.jpg')} style={styles.header} resizeMode="cover">
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(10,20,50,0.72)' }} pointerEvents="none" />
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backText}>←</Text>
+            <ArrowLeft size={26} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.title}>{t('parcel.title')}</Text>
           <Text style={styles.subtitle}>{t('parcel.subtitle')}</Text>
-        </LinearGradient>
+        </ImageBackground>
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {/* Sender */}
           <View style={styles.card}>
-            <Section title={`👤 ${t('parcel.sender_info')}`} />
+            <Section title={t('parcel.sender_info')} icon={<UserIcon size={18} color={theme.text} />} />
             <Field label={t('parcel.sender_name')}  value={form.sender_name}  onChangeText={(v: string) => update('sender_name', v)}  placeholder="Jean-Pierre Mbarga" />
             <Field label={t('parcel.sender_phone')} value={form.sender_phone} onChangeText={(v: string) => update('sender_phone', v)} placeholder="677123456" keyboardType="phone-pad" />
           </View>
 
           {/* Receiver */}
           <View style={styles.card}>
-            <Section title={`📩 ${t('parcel.receiver_info')}`} />
+            <Section title={t('parcel.receiver_info')} icon={<Inbox size={18} color={theme.text} />} />
             <Field label={t('parcel.receiver_name')}  value={form.receiver_name}  onChangeText={(v: string) => update('receiver_name', v)}  placeholder="Marie Ngo" />
             <Field label={t('parcel.receiver_phone')} value={form.receiver_phone} onChangeText={(v: string) => update('receiver_phone', v)} placeholder="699654321" keyboardType="phone-pad" />
           </View>
 
           {/* Package Details */}
           <View style={styles.card}>
-            <Section title={`📦 Package Details`} />
+            <Section title="Package Details" icon={<Package size={18} color={theme.text} />} />
             <Field label={t('parcel.description')} value={form.description} onChangeText={(v: string) => update('description', v)} placeholder="e.g. Clothes, Electronics..." multiline />
             <Field label={t('parcel.weight')} value={form.weight_kg} onChangeText={(v: string) => update('weight_kg', v)} placeholder="1.5" keyboardType="decimal-pad" />
             <Field label={t('parcel.declared_value')} value={form.declared_value} onChangeText={(v: string) => update('declared_value', v)} placeholder="5000" keyboardType="numeric" />
             <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>{t('parcel.is_fragile')} ⚠️</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={styles.switchLabel}>{t('parcel.is_fragile')}</Text>
+                <AlertTriangle size={16} color={theme.warning} />
+              </View>
               <Switch value={form.is_fragile} onValueChange={v => update('is_fragile', v)} trackColor={{ true: theme.primary }} />
             </View>
           </View>
 
           {/* Company & Branches */}
           <View style={styles.card}>
-            <Section title={`🚌 ${t('parcel.select_company')}`} />
+            <Section title={t('parcel.select_company')} icon={<BusFront size={18} color={theme.text} />} />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
               {(companies ?? []).map((co: any) => (
                 <TouchableOpacity key={co.id}
                   style={[styles.companyChip, form.company_id === String(co.id) && styles.companyChipSelected]}
                   onPress={() => { update('company_id', String(co.id)); update('origin_branch_id', ''); update('dest_branch_id', ''); }}>
+                  <Image source={getCompanyLogo(co.name)} style={styles.companyLogo} resizeMode="cover" />
                   <Text style={[styles.companyChipText, form.company_id === String(co.id) && { color: '#fff' }]}>
                     {co.name}
                   </Text>
@@ -178,7 +189,10 @@ export default function SendParcelScreen() {
             activeOpacity={0.85}
           >
             <LinearGradient colors={theme.gradientPrimary} style={styles.sendBtnInner}>
-              <Text style={styles.sendBtnText}>{isPending ? t('common.loading') : `📦 ${t('parcel.send_parcel')}`}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {!isPending && <Package size={18} color="#fff" />}
+                <Text style={styles.sendBtnText}>{isPending ? t('common.loading') : t('parcel.send_parcel')}</Text>
+              </View>
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -191,7 +205,6 @@ const getStyles = (theme: any) => StyleSheet.create({
   container:         { flex: 1, backgroundColor: theme.background },
   header:            { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 24 },
   backBtn:           { marginBottom: 12 },
-  backText:          { fontSize: 26, color: '#fff' },
   title:             { fontSize: 26, fontWeight: '800', color: '#fff' },
   subtitle:          { fontSize: 14, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
   scroll:            { padding: 16, gap: 14, paddingBottom: 120 },
@@ -202,8 +215,9 @@ const getStyles = (theme: any) => StyleSheet.create({
   fieldInput:        { backgroundColor: theme.background, borderRadius: 12, borderWidth: 1.5, borderColor: theme.border, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: theme.text },
   switchRow:         { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
   switchLabel:       { fontSize: 15, fontWeight: '600', color: theme.text },
-  companyChip:       { backgroundColor: theme.background, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginRight: 8, borderWidth: 1.5, borderColor: theme.border },
+  companyChip:       { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.background, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginRight: 8, borderWidth: 1.5, borderColor: theme.border },
   companyChipSelected: { backgroundColor: theme.primary, borderColor: theme.primary },
+  companyLogo:       { width: 24, height: 24, borderRadius: 6, marginRight: 8 },
   companyChipText:   { fontSize: 13, fontWeight: '600', color: theme.text },
   branchChip:        { backgroundColor: theme.background, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginRight: 8, borderWidth: 1, borderColor: theme.border },
   branchChipSelected:{ borderColor: theme.primary, backgroundColor: theme.primary + '15' },

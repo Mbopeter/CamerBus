@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,7 @@ import * as Clipboard from 'expo-clipboard';
 import { useBookingStore } from '../../../store/useBookingStore';
 import { useThemeColor } from '../../../hooks/useThemeColor';
 import { PAYMENT_METHODS } from '../../../constants/data';
+import { ArrowLeft, Ticket as TicketIcon, Zap, CreditCard, Copy, ClipboardList, AlertTriangle, Camera } from 'lucide-react-native';
 
 export default function PaymentInstructionsScreen() {
   const { t }    = useTranslation();
@@ -37,13 +38,14 @@ export default function PaymentInstructionsScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
+      <ImageBackground source={require('../../../assets/bgimage.jpg')} style={styles.header} resizeMode="cover">
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(10,20,50,0.72)' }} pointerEvents="none" />
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <ArrowLeft size={26} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>{t('payment.title')}</Text>
         <Text style={styles.subtitle}>{method.name}</Text>
-      </LinearGradient>
+      </ImageBackground>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Amount to pay */}
@@ -56,19 +58,28 @@ export default function PaymentInstructionsScreen() {
           {/* Platform fee breakdown */}
           <View style={styles.feeBreakdown}>
             <View style={styles.feeRow}>
-              <Text style={styles.feeLabel}>🎫 Ticket price ({selectedSeats.length} seat{selectedSeats.length !== 1 ? 's' : ''})</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <TicketIcon size={14} color="#444" />
+                <Text style={styles.feeLabel}>Ticket price ({selectedSeats.length} seat{selectedSeats.length !== 1 ? 's' : ''})</Text>
+              </View>
               <Text style={styles.feeValue}>{ticketTotal.toLocaleString()} XAF</Text>
             </View>
             <View style={[styles.feeRow, styles.platformFeeRow]}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.platformFeeLabel}>⚡ Platform charge</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Zap size={14} color="#856404" />
+                  <Text style={styles.platformFeeLabel}>Platform charge</Text>
+                </View>
                 <Text style={styles.platformFeeNote}>Secure booking & processing fee</Text>
               </View>
               <Text style={styles.platformFeeAmount}>+ {PLATFORM_FEE.toLocaleString()} XAF</Text>
             </View>
             <View style={styles.feeDivider} />
             <View style={styles.feeRow}>
-              <Text style={styles.feeTotalLabel}>💳 Total to transfer</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <CreditCard size={14} color={theme.primary} />
+                <Text style={styles.feeTotalLabel}>Total to transfer</Text>
+              </View>
               <Text style={styles.feeTotalValue}>{total.toLocaleString()} XAF</Text>
             </View>
           </View>
@@ -88,7 +99,10 @@ export default function PaymentInstructionsScreen() {
                 <Text style={styles.payDetailLabel}>{t('payment.account_number')}</Text>
                 <TouchableOpacity style={styles.numberRow} onPress={() => copyNumber(details.number ?? '')}>
                   <Text style={styles.numberText}>{details.number}</Text>
-                  <Text style={styles.copyBtn}>📋 Copy</Text>
+                  <View style={styles.copyBtnWrap}>
+                    <Copy size={12} color={theme.primary} />
+                    <Text style={styles.copyBtnText}>Copy</Text>
+                  </View>
                 </TouchableOpacity>
               </View>
             </>
@@ -106,7 +120,10 @@ export default function PaymentInstructionsScreen() {
                 <Text style={styles.payDetailLabel}>{t('payment.account_number')}</Text>
                 <TouchableOpacity style={styles.numberRow} onPress={() => copyNumber(details.number ?? '')}>
                   <Text style={styles.numberText}>{details.number}</Text>
-                  <Text style={styles.copyBtn}>📋 Copy</Text>
+                  <View style={styles.copyBtnWrap}>
+                    <Copy size={12} color={theme.primary} />
+                    <Text style={styles.copyBtnText}>Copy</Text>
+                  </View>
                 </TouchableOpacity>
               </View>
             </>
@@ -115,7 +132,10 @@ export default function PaymentInstructionsScreen() {
 
         {/* Steps */}
         <View style={styles.stepsCard}>
-          <Text style={styles.stepsTitle}>📋 How to Pay</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+            <ClipboardList size={18} color={theme.text} />
+            <Text style={[styles.stepsTitle, { marginBottom: 0 }]}>How to Pay</Text>
+          </View>
           {[
             `Open your ${method.nameShort} app`,
             `Send exactly ${total.toLocaleString()} XAF to ${details.number} (includes ${PLATFORM_FEE.toLocaleString()} XAF platform charge)`,
@@ -133,7 +153,7 @@ export default function PaymentInstructionsScreen() {
 
         {/* Warning */}
         <View style={styles.warningBox}>
-          <Text style={styles.warningIcon}>⚠️</Text>
+          <AlertTriangle size={20} color="#856404" />
           <Text style={styles.warningText}>{t('payment.screenshot_tip')}</Text>
         </View>
       </ScrollView>
@@ -141,7 +161,11 @@ export default function PaymentInstructionsScreen() {
       <View style={styles.footer}>
         <TouchableOpacity style={styles.nextBtn} onPress={() => router.push('/(main)/payment/upload-proof')} activeOpacity={0.85}>
           <LinearGradient colors={theme.gradientPrimary} style={styles.nextBtnInner}>
-            <Text style={styles.nextBtnText}>📸 {t('payment.upload_proof')} →</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Camera size={18} color="#fff" />
+              <Text style={styles.nextBtnText}>{t('payment.upload_proof')}</Text>
+              <ArrowLeft size={18} color="#fff" style={{ transform: [{ rotate: '180deg' }] }} />
+            </View>
           </LinearGradient>
         </TouchableOpacity>
       </View>
@@ -153,7 +177,6 @@ const getStyles = (theme: any) => StyleSheet.create({
   container:       { flex: 1, backgroundColor: theme.background },
   header:          { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 24 },
   backBtn:         { marginBottom: 12 },
-  backText:        { fontSize: 26, color: '#fff' },
   title:           { fontSize: 24, fontWeight: '800', color: '#fff' },
   subtitle:        { fontSize: 14, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
   scroll:          { padding: 16, gap: 14, paddingBottom: 100 },
@@ -180,7 +203,8 @@ const getStyles = (theme: any) => StyleSheet.create({
   payDetailValue:  { fontSize: 16, fontWeight: '700', color: theme.text, marginTop: 4 },
   numberRow:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
   numberText:      { fontSize: 24, fontWeight: '900', color: theme.primary, letterSpacing: 2 },
-  copyBtn:         { fontSize: 13, color: theme.primary, fontWeight: '700', backgroundColor: theme.primary + '15', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  copyBtnWrap:     { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: theme.primary + '15', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
+  copyBtnText:     { fontSize: 13, color: theme.primary, fontWeight: '700' },
   stepsCard:       { backgroundColor: theme.card, borderRadius: 20, padding: 20, shadowColor:'#000', shadowOffset:{width:0,height:4}, shadowOpacity:0.07, shadowRadius:12, elevation:4 },
   stepsTitle:      { fontSize: 16, fontWeight: '800', color: theme.text, marginBottom: 16 },
   step:            { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 14 },
@@ -188,7 +212,6 @@ const getStyles = (theme: any) => StyleSheet.create({
   stepNumText:     { fontSize: 13, fontWeight: '800', color: '#fff' },
   stepText:        { fontSize: 14, color: theme.textLight, lineHeight: 22, flex: 1 },
   warningBox:      { backgroundColor: '#FFF9C4', borderRadius: 14, padding: 16, flexDirection: 'row', gap: 10 },
-  warningIcon:     { fontSize: 20 },
   warningText:     { flex: 1, fontSize: 13, color: theme.text, lineHeight: 20 },
   footer:          { padding: 20, paddingBottom: 34, backgroundColor: theme.card, shadowColor:'#000', shadowOffset:{width:0,height:-4}, shadowOpacity:0.08, shadowRadius:12, elevation:10 },
   nextBtn:         { borderRadius: 16, overflow: 'hidden' },

@@ -1,8 +1,6 @@
 import { useState, useMemo } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  TextInput, ActivityIndicator, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { companyService } from '../../../services/endpoints';
 import { useBookingStore } from '../../../store/useBookingStore';
 import { useThemeColor } from '../../../hooks/useThemeColor';
+import { ArrowLeft, Building2, BusFront, Check, MapPin, CalendarDays, ArrowRight, Search } from 'lucide-react-native';
 
 export default function BranchSearchScreen() {
   const { t }  = useTranslation();
@@ -67,13 +66,17 @@ export default function BranchSearchScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
+      <ImageBackground source={require('../../../assets/bgimage.jpg')} style={styles.header} resizeMode="cover">
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(10,20,50,0.72)' }} pointerEvents="none" />
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <ArrowLeft size={26} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.title}>🏢 Book by Branch</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <Building2 size={24} color="#fff" />
+          <Text style={[styles.title, { marginBottom: 0 }]}>Book by Branch</Text>
+        </View>
         <Text style={styles.subtitle}>Choose your exact departure & arrival branch</Text>
-      </LinearGradient>
+      </ImageBackground>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
@@ -99,14 +102,14 @@ export default function BranchSearchScreen() {
                     onPress={() => handleSelectCompany(co)}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.companyIcon}>🚌</Text>
-                    <View style={{ flex: 1 }}>
+                    <BusFront size={22} color={selected ? "#fff" : theme.muted} />
+                    <View style={{ flex: 1, marginLeft: 12 }}>
                       <Text style={[styles.companyName, selected && { color: '#fff' }]}>{co.name}</Text>
                       <Text style={[styles.companyMeta, selected && { color: 'rgba(255,255,255,0.75)' }]}>
                         {co.branch_count ?? 0} branches
                       </Text>
                     </View>
-                    {selected && <Text style={styles.checkmark}>✓</Text>}
+                    {selected && <Check size={18} color="#fff" strokeWidth={3} />}
                   </TouchableOpacity>
                 );
               })}
@@ -139,11 +142,14 @@ export default function BranchSearchScreen() {
                       activeOpacity={0.8}
                     >
                       <View style={[styles.branchDot, { backgroundColor: selected ? theme.success : theme.border }]} />
-                      <View style={{ flex: 1 }}>
+                      <View style={{ flex: 1, marginLeft: 12 }}>
                         <Text style={[styles.branchName, selected && { color: theme.primary }]}>{b.name}</Text>
-                        <Text style={styles.branchCity}>📍 {b.city_name}{b.address ? ` · ${b.address}` : ''}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                          <MapPin size={12} color={theme.muted} />
+                          <Text style={[styles.branchCity, { marginTop: 0 }]}>{b.city_name}{b.address ? ` · ${b.address}` : ''}</Text>
+                        </View>
                       </View>
-                      {selected && <Text style={[styles.checkmark, { color: theme.success }]}>✓</Text>}
+                      {selected && <Check size={18} color={theme.success} strokeWidth={3} />}
                     </TouchableOpacity>
                   );
                 })}
@@ -175,11 +181,14 @@ export default function BranchSearchScreen() {
                       activeOpacity={0.8}
                     >
                       <View style={[styles.branchDot, { backgroundColor: selected ? theme.danger : theme.border }]} />
-                      <View style={{ flex: 1 }}>
+                      <View style={{ flex: 1, marginLeft: 12 }}>
                         <Text style={[styles.branchName, selected && { color: theme.primary }]}>{b.name}</Text>
-                        <Text style={styles.branchCity}>📍 {b.city_name}{b.address ? ` · ${b.address}` : ''}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                          <MapPin size={12} color={theme.muted} />
+                          <Text style={[styles.branchCity, { marginTop: 0 }]}>{b.city_name}{b.address ? ` · ${b.address}` : ''}</Text>
+                        </View>
                       </View>
-                      {selected && <Text style={[styles.checkmark, { color: theme.danger }]}>✓</Text>}
+                      {selected && <Check size={18} color={theme.danger} strokeWidth={3} />}
                     </TouchableOpacity>
                   );
                 })}
@@ -205,7 +214,10 @@ export default function BranchSearchScreen() {
               placeholderTextColor={theme.muted}
               keyboardType="numbers-and-punctuation"
             />
-            <Text style={styles.dateHint}>📅 Enter date in YYYY-MM-DD format</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
+              <CalendarDays size={12} color={theme.muted} />
+              <Text style={[styles.dateHint, { marginTop: 0 }]}>Enter date in YYYY-MM-DD format</Text>
+            </View>
           </View>
         )}
 
@@ -219,7 +231,7 @@ export default function BranchSearchScreen() {
                   <Text style={styles.previewBranch}>{fromBranch.name}</Text>
                 </View>
                 <View style={styles.previewMiddle}>
-                  <Text style={styles.previewArrow}>→</Text>
+                  <ArrowRight size={24} color="#fff" />
                   <Text style={styles.previewCompany}>{selectedCompany?.name}</Text>
                 </View>
                 <View style={[styles.previewCity, { alignItems: 'flex-end' }]}>
@@ -243,7 +255,10 @@ export default function BranchSearchScreen() {
           activeOpacity={0.85}
         >
           <LinearGradient colors={theme.gradientPrimary} style={styles.searchBtnInner}>
-            <Text style={styles.searchBtnText}>🔍 Search Schedules →</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Search size={18} color="#fff" />
+              <Text style={styles.searchBtnText}>Search Schedules</Text>
+            </View>
           </LinearGradient>
         </TouchableOpacity>
       </View>
@@ -255,7 +270,6 @@ const getStyles = (theme: any) => StyleSheet.create({
   container:           { flex: 1, backgroundColor: theme.background },
   header:              { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 28 },
   backBtn:             { marginBottom: 14 },
-  backText:            { fontSize: 26, color: '#fff' },
   title:               { fontSize: 26, fontWeight: '800', color: '#fff' },
   subtitle:            { fontSize: 14, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
 

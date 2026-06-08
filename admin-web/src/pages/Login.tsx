@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { api } from '../services/api';
 import { Lock, Mail, Loader2 } from 'lucide-react';
+import darkLogo from '../assets/dark.logo.png';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -34,11 +35,21 @@ export default function Login() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-primary)' }}>
-      <div className="card" style={{ width: '100%', maxWidth: '400px', borderTop: '4px solid var(--brand-primary)' }}>
+      <div className="card" style={{ width: '100%', maxWidth: '420px', borderTop: '4px solid var(--brand-primary)' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--brand-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem auto', fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>
-            C
-          </div>
+          <img
+            src={darkLogo}
+            alt="CamerBus"
+            style={{
+              width: '160px',
+              height: 'auto',
+              objectFit: 'contain',
+              filter: 'brightness(0) invert(1)',
+              opacity: 0.92,
+              display: 'block',
+              margin: '0 auto 1.25rem auto',
+            }}
+          />
           <h2>Admin Portal</h2>
           <p style={{ marginTop: '0.5rem' }}>Sign in to manage CamerBus</p>
         </div>

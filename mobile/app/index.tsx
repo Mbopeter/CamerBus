@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Animated, Dimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '../store/useAuthStore';
@@ -58,10 +58,11 @@ export default function SplashRouter() {
       </View>
 
       <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
-        <View style={styles.logoBox}>
-          <Text style={styles.logoEmoji}>🚌</Text>
-        </View>
-        <Text style={styles.appName}>CamerBus</Text>
+        <Image
+          source={require('../assets/dark.logo.png')}
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
         <Text style={styles.tagline}>Cameroon's Transport Super-App</Text>
         <Text style={styles.taglineFr}>L'Application de Transport du Cameroun</Text>
 
@@ -102,10 +103,8 @@ const styles = StyleSheet.create({
   circle2:      { position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(252,209,22,0.08)', bottom: 80, left: -60 },
   flagStripes:  { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', height: 5 },
   stripe:       { flex: 1 },
-  content:      { alignItems: 'center', gap: 12, flex: 1, justifyContent: 'center' },
-  logoBox:      { width: 110, height: 110, borderRadius: 32, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.25)', marginBottom: 8 },
-  logoEmoji:    { fontSize: 56 },
-  appName:      { fontSize: 46, fontWeight: '900', color: '#fff', letterSpacing: 1 },
+  content:      { alignItems: 'center', gap: 8, flex: 1, justifyContent: 'center' },
+  logoImage:    { width: width * 0.88, height: width * 0.88 },
   tagline:      { fontSize: 14, color: 'rgba(255,255,255,0.85)' },
   taglineFr:    { fontSize: 13, color: 'rgba(255,255,255,0.65)' },
   dots:         { flexDirection: 'row', gap: 10, marginTop: 24 },

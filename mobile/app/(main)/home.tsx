@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Dimensions, RefreshControl,
+  TextInput, Dimensions, RefreshControl, Image, ImageBackground,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -12,6 +12,8 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { useBookingStore } from '../../store/useBookingStore';
 import { useThemeColor } from '../../hooks/useThemeColor';
 import { MAJOR_CITIES } from '../../constants/data';
+import { getCompanyLogo } from '../../utils/companyLogos';
+import { MapPin, Flag, CalendarDays, Clock, Sun, Moon, BusFront, Package, Search, Ticket, ArrowDownUp, ArrowRight, Star, AlertTriangle } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -62,8 +64,8 @@ export default function HomeScreen() {
 
   // Fixed shift slots for all routes
   const SHIFT_SLOTS = [
-    { key: 'morning', icon: '☀️', label: 'Day Shift',   time: '10:00', display: '10:00 AM' },
-    { key: 'night',   icon: '🌙', label: 'Night Shift', time: '20:00', display: '8:00 PM' },
+    { key: 'morning', icon: <Sun size={18} color={theme.textLight} />, label: 'Day Shift',   time: '10:00', display: '10:00 AM' },
+    { key: 'night',   icon: <Moon size={18} color={theme.textLight} />, label: 'Night Shift', time: '20:00', display: '8:00 PM' },
   ];
 
   const handleSearch = () => {
@@ -121,17 +123,33 @@ export default function HomeScreen() {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}
       refreshControl={<RefreshControl refreshing={Boolean(isLoading)} onRefresh={refetch} tintColor={theme.primary} />}>
 
-      {/* Header */}
-      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
+      {/* Header — Bus Park ImageBackground */}
+      <ImageBackground
+        source={require('../../assets/bgimage.jpg')}
+        style={styles.header}
+        resizeMode="cover"
+        imageStyle={{ borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
+      >
+        {/* Dark overlay for legibility */}
+        <View style={styles.headerOverlay} pointerEvents="none" />
         <View style={styles.circle1} /><View style={styles.circle2} />
         <View style={styles.headerTop}>
-          <View>
-            <Text style={styles.greeting}>{greeting}, {user?.full_name?.split(' ')[0] ?? '👋'}</Text>
-            <Text style={styles.headerSub}>{t('home.search_subtitle')}</Text>
-          </View>
+          <Image
+            source={require('../../assets/dark.logo.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
           <TouchableOpacity onPress={() => router.push('/(main)/notifications')} style={styles.notifBtn}>
-            <Text style={{ fontSize: 24 }}>🔔</Text>
+            <Image
+              source={require('../../assets/bus-icon.png')}
+              style={{ width: 28, height: 28 }}
+              resizeMode="contain"
+            />
           </TouchableOpacity>
+        </View>
+        <View style={styles.greetingRow}>
+          <Text style={styles.greeting}>{greeting}, {user?.full_name?.split(' ')[0] ?? '👋'}</Text>
+          <Text style={styles.headerSub}>{t('home.search_subtitle')}</Text>
         </View>
 
         {/* Search Card */}
@@ -140,7 +158,7 @@ export default function HomeScreen() {
 
           {/* From */}
           <TouchableOpacity style={styles.searchRow} onPress={() => { setShowFrom(!showFrom); setShowTo(false); setExpandedCityId(null); }}>
-            <Text style={styles.searchIcon}>📍</Text>
+            <View style={styles.searchIcon}><MapPin size={22} color={theme.primary} /></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.searchLabel}>{t('home.from')}</Text>
               <Text style={[styles.searchValue, !fromCity && { color: theme.muted }]}>
@@ -156,14 +174,14 @@ export default function HomeScreen() {
             setToCity(tC);       setToBranch(tB);
             setTravelTime(''); // reset shift when swapping route
           }}>
-            <Text style={{ fontSize: 20, transform: [{ rotate: '90deg' }] }}>⇄</Text>
+            <ArrowDownUp size={18} color={theme.primary} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
 
           {/* To */}
           <TouchableOpacity style={styles.searchRow} onPress={() => { setShowTo(!showTo); setShowFrom(false); setExpandedCityId(null); }}>
-            <Text style={styles.searchIcon}>🏁</Text>
+            <View style={styles.searchIcon}><Flag size={22} color={theme.primary} /></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.searchLabel}>{t('home.to')}</Text>
               <Text style={[styles.searchValue, !toCity && { color: theme.muted }]}>
@@ -176,7 +194,7 @@ export default function HomeScreen() {
 
           {/* Date */}
           <View style={styles.searchRow}>
-            <Text style={styles.searchIcon}>📅</Text>
+            <View style={styles.searchIcon}><CalendarDays size={22} color={theme.primary} /></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.searchLabel}>{t('home.date')}</Text>
               <TextInput
@@ -193,7 +211,7 @@ export default function HomeScreen() {
 
           {/* Shift Selector */}
           <View style={styles.searchRow}>
-            <Text style={styles.searchIcon}>🕐</Text>
+            <View style={styles.searchIcon}><Clock size={22} color={theme.primary} /></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.searchLabel}>Departure Shift (Required)</Text>
               <View style={styles.shiftRow}>
@@ -203,7 +221,7 @@ export default function HomeScreen() {
                     style={[styles.shiftBtn, travelTime === slot.key && styles.shiftBtnActive]}
                     onPress={() => setTravelTime(slot.key)}
                   >
-                    <Text style={styles.shiftIcon}>{slot.icon}</Text>
+                    <View style={styles.shiftIcon}>{slot.icon}</View>
                     <Text style={[styles.shiftLabel, travelTime === slot.key && styles.shiftLabelActive]}>
                       {slot.label}
                     </Text>
@@ -214,7 +232,10 @@ export default function HomeScreen() {
                 ))}
               </View>
               {!travelTime && (
-                <Text style={{ fontSize: 11, color: theme.danger, marginTop: 4 }}>⚠️ Please select a departure shift</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                  <AlertTriangle size={12} color={theme.danger} />
+                  <Text style={{ fontSize: 11, color: theme.danger }}>Please select a departure shift</Text>
+                </View>
               )}
             </View>
           </View>
@@ -224,7 +245,10 @@ export default function HomeScreen() {
             onPress={handleSearch}
             disabled={!fromCity || !toCity || !travelTime}>
             <LinearGradient colors={theme.gradientPrimary} style={styles.searchBtnInner}>
-              <Text style={styles.searchBtnText}>🔍  {t('home.search_trips')}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Search size={18} color="#fff" />
+                <Text style={styles.searchBtnText}>{t('home.search_trips')}</Text>
+              </View>
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -253,13 +277,19 @@ export default function HomeScreen() {
                     {isExpanded && (
                       <View style={styles.branchesList}>
                         <TouchableOpacity style={styles.branchItem} onPress={() => selectBranch(c, null, showFrom ? 'from' : 'to')}>
-                          <Text style={styles.branchName}>🌐 All Branches in {c.name}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <MapPin size={16} color={theme.text} />
+                            <Text style={styles.branchName}>All Branches in {c.name}</Text>
+                          </View>
                         </TouchableOpacity>
                         
                         {cityBranches.map((b: any) => (
                           <TouchableOpacity key={b.id} style={styles.branchItem} onPress={() => selectBranch(c, b, showFrom ? 'from' : 'to')}>
-                            <Text style={styles.branchName}>📍 {b.name}</Text>
-                            {b.address && <Text style={styles.branchAddress}>{b.address}</Text>}
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <MapPin size={16} color={theme.primary} />
+                              <Text style={styles.branchName}>{b.name}</Text>
+                            </View>
+                            {b.address && <Text style={[styles.branchAddress, { marginLeft: 22 }]}>{b.address}</Text>}
                           </TouchableOpacity>
                         ))}
                       </View>
@@ -270,19 +300,19 @@ export default function HomeScreen() {
             </ScrollView>
           </View>
         )}
-      </LinearGradient>
+      </ImageBackground>
 
       {/* Quick Actions (Branch Book removed as it's now integrated) */}
       <View style={styles.section}>
         <View style={styles.quickActions}>
           {[
-            { icon: '🚌', label: t('home.quick_book'),  onPress: () => router.push('/(main)/companies') },
-            { icon: '📦', label: t('home.send_parcel'), onPress: () => router.push('/(main)/parcels/send') },
-            { icon: '🔍', label: t('home.track_parcel'),onPress: () => router.push('/(main)/parcels/track') },
-            { icon: '🎫', label: t('home.my_trips'),    onPress: () => router.push('/(main)/tickets') },
+            { icon: <BusFront size={26} color={theme.primary} />, label: t('home.quick_book'),  onPress: () => router.push('/(main)/companies') },
+            { icon: <Package size={26} color={theme.primary} />, label: t('home.send_parcel'), onPress: () => router.push('/(main)/parcels/send') },
+            { icon: <Search size={26} color={theme.primary} />, label: t('home.track_parcel'),onPress: () => router.push('/(main)/parcels/track') },
+            { icon: <Ticket size={26} color={theme.primary} />, label: t('home.my_trips'),    onPress: () => router.push('/(main)/tickets') },
           ].map(({ icon, label, onPress }) => (
             <TouchableOpacity key={label} style={styles.quickAction} onPress={onPress}>
-              <View style={styles.quickIcon}><Text style={{ fontSize: 26 }}>{icon}</Text></View>
+              <View style={styles.quickIcon}>{icon}</View>
               <Text style={styles.quickLabel}>{label}</Text>
             </TouchableOpacity>
           ))}
@@ -303,7 +333,7 @@ export default function HomeScreen() {
               }}>
               <LinearGradient colors={i % 2 === 0 ? theme.gradientPrimary : theme.gradientDark} style={styles.routeCardInner}>
                 <Text style={styles.routeFrom}>{route.from}</Text>
-                <Text style={styles.routeArrow}>→</Text>
+                <View style={styles.routeArrow}><ArrowRight size={16} color="rgba(255,255,255,0.6)" /></View>
                 <Text style={styles.routeTo}>{route.to}</Text>
                 <View style={styles.routeMeta}>
                   <Text style={styles.routePrice}>{route.price} XAF</Text>
@@ -325,14 +355,17 @@ export default function HomeScreen() {
         ) : (
           (companiesData ?? []).map((co: any) => (
             <TouchableOpacity key={co.id} style={styles.companyCard}
-              onPress={() => router.push(`/(main)/companies/${co.id}` as any)}>
-              <View style={styles.companyEmoji}><Text style={{ fontSize: 28 }}>🚌</Text></View>
+              onPress={() => router.push(`/(main)/companies/${co.id}` as any)} activeOpacity={0.85}>
+              <View style={styles.companyEmoji}>
+                <Image source={getCompanyLogo(co.name)} style={{ width: 44, height: 44, borderRadius: 12 }} resizeMode="cover" />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.companyName}>{co.name}</Text>
                 <Text style={styles.companyMeta}>{co.route_count ?? 0} routes · {co.branch_count ?? 0} branches</Text>
               </View>
               <View style={styles.ratingBadge}>
-                <Text style={styles.ratingText}>⭐ {co.rating}</Text>
+                <Star size={12} color="#E5BC00" fill="#E5BC00" style={{ marginRight: 4 }} />
+                <Text style={styles.ratingText}>{co.rating}</Text>
               </View>
             </TouchableOpacity>
           ))
@@ -346,17 +379,20 @@ export default function HomeScreen() {
 
 const getStyles = (theme: any) => StyleSheet.create({
   container:       { flex: 1, backgroundColor: theme.background },
-  header:          { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 30, overflow: 'hidden' },
+  header:          { paddingTop: 50, paddingHorizontal: 20, paddingBottom: 24, overflow: 'hidden', borderBottomLeftRadius: 32, borderBottomRightRadius: 32 },
+  headerOverlay:   { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10,20,50,0.72)', borderBottomLeftRadius: 32, borderBottomRightRadius: 32 },
   circle1:         { position:'absolute', width:220, height:220, borderRadius:110, backgroundColor:'rgba(255,255,255,0.05)', top:-80, right:-80 },
   circle2:         { position:'absolute', width:160, height:160, borderRadius:80, backgroundColor:'rgba(252,209,22,0.08)', bottom:-40, left:-40 },
-  headerTop:       { flexDirection:'row', justifyContent:'space-between', alignItems:'flex-start', marginBottom: 20 },
-  greeting:        { fontSize: 24, fontWeight: '800', color: '#fff' },
-  headerSub:       { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
-  notifBtn:        { width:44, height:44, borderRadius:22, backgroundColor:'rgba(255,255,255,0.15)', alignItems:'center', justifyContent:'center' },
+  headerTop:       { flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom: 12 },
+  headerLogo:      { width: 100, height: 40 },
+  greetingRow:     { paddingVertical: 4, marginBottom: 16 },
+  greeting:        { fontSize: 28, fontWeight: '800', color: '#fff', letterSpacing: 0.5 },
+  headerSub:       { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
+  notifBtn:        { width:44, height:44, borderRadius:22, backgroundColor:'#ffffff', alignItems:'center', justifyContent:'center', overflow: 'hidden' },
   searchCard:      { backgroundColor: theme.card, borderRadius:24, padding:20, shadowColor:'#000', shadowOffset:{width:0,height:8}, shadowOpacity:0.12, shadowRadius:20, elevation:10, position:'relative' },
   searchTitle:     { fontSize: 16, fontWeight: '700', color: theme.text, marginBottom: 16 },
   searchRow:       { flexDirection:'row', alignItems:'center', paddingVertical:10, gap:12 },
-  searchIcon:      { fontSize: 20 },
+  searchIcon:      { alignItems: 'center', justifyContent: 'center', width: 24 },
   searchLabel:     { fontSize: 11, color: theme.muted, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
   searchValue:     { fontSize: 16, fontWeight: '600', color: theme.text, marginTop: 2 },
   divider:         { height: 1, backgroundColor: theme.border, marginLeft: 32 },

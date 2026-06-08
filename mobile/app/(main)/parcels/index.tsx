@@ -1,8 +1,6 @@
-import { useState } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Switch, FlatList, RefreshControl,
-} from 'react-native';
+import { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  TextInput, Switch, FlatList, RefreshControl, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +10,7 @@ import { useAuthStore } from '../../../store/useAuthStore';
 import { useThemeColor } from '../../../hooks/useThemeColor';
 import { PARCEL_STATUSES } from '../../../constants/data';
 import Toast from 'react-native-toast-message';
+import { Package, Search, ArrowRight, CalendarDays, User as UserIcon, Wallet } from 'lucide-react-native';
 
 export default function ParcelsScreen() {
   const { t }    = useTranslation();
@@ -28,67 +27,93 @@ export default function ParcelsScreen() {
 
   const parcels: any[] = data ?? [];
 
+  const renderParcelItem = useCallback(({ item: p }: { item: any }) => {
+    const statusInfo = PARCEL_STATUSES[p.status as keyof typeof PARCEL_STATUSES];
+    return (
+      <TouchableOpacity style={styles.card}
+        onPress={() => router.push(`/(main)/tracking/${p.id}` as any)} activeOpacity={0.85}>
+        <View style={styles.cardTop}>
+          <View style={styles.trackingTag}>
+            <Text style={styles.trackingNum}>{p.tracking_number}</Text>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: (statusInfo?.color ?? theme.muted) + '20' }]}>
+            <Text style={{ fontSize: 14 }}>{statusInfo?.icon}</Text>
+            <Text style={[styles.statusText, { color: statusInfo?.color }]}>{statusInfo?.label}</Text>
+          </View>
+        </View>
+        <View style={styles.routeRow}>
+          <View>
+            <Text style={styles.branchName}>{p.origin_branch}</Text>
+            <Text style={styles.cityName}>{p.origin_city}</Text>
+          </View>
+          <ArrowRight size={18} color={theme.primary} />
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={styles.branchName}>{p.dest_branch}</Text>
+            <Text style={styles.cityName}>{p.dest_city}</Text>
+          </View>
+        </View>
+        <View style={styles.cardBottom}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <CalendarDays size={12} color={theme.textLight} />
+            <Text style={styles.meta}>{p.created_at?.slice(0,10)}</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <UserIcon size={12} color={theme.textLight} />
+            <Text style={styles.meta}>To: {p.receiver_name}</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Wallet size={12} color={theme.textLight} />
+            <Text style={styles.meta}>{Number(p.shipping_cost).toLocaleString()} XAF</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }, [router, theme, styles]);
+
   return (
     <View style={styles.container}>
-      <LinearGradient colors={theme.gradientPrimary} style={styles.header}>
+      <ImageBackground source={require('../../../assets/bgimage.jpg')} style={styles.header} resizeMode="cover">
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(10,20,50,0.72)' }} pointerEvents="none" />
         <Text style={styles.title}>{t('parcel.my_parcels')}</Text>
         <Text style={styles.subtitle}>Track and manage your packages</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/(main)/parcels/send')} activeOpacity={0.85}>
-            <Text style={styles.actionBtnText}>📦 {t('home.send_parcel')}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Package size={16} color={theme.primary} />
+              <Text style={styles.actionBtnText}>{t('home.send_parcel')}</Text>
+            </View>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.actionBtn, styles.actionBtnOutline]}
             onPress={() => router.push('/(main)/parcels/track')} activeOpacity={0.85}>
-            <Text style={[styles.actionBtnText, { color: theme.primary }]}>🔍 {t('home.track_parcel')}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Search size={16} color={theme.primary} />
+              <Text style={[styles.actionBtnText, { color: theme.primary }]}>{t('home.track_parcel')}</Text>
+            </View>
           </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </ImageBackground>
 
       <FlatList
         data={parcels}
         keyExtractor={i => String(i.id)}
         contentContainerStyle={styles.list}
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        removeClippedSubviews={true}
         refreshControl={<RefreshControl refreshing={Boolean(isLoading)} onRefresh={refetch} tintColor={theme.primary} />}
-        renderItem={({ item: p }) => {
-          const statusInfo = PARCEL_STATUSES[p.status as keyof typeof PARCEL_STATUSES];
-          return (
-            <TouchableOpacity style={styles.card}
-              onPress={() => router.push(`/(main)/tracking/${p.id}` as any)} activeOpacity={0.85}>
-              <View style={styles.cardTop}>
-                <View style={styles.trackingTag}>
-                  <Text style={styles.trackingNum}>{p.tracking_number}</Text>
-                </View>
-                <View style={[styles.statusBadge, { backgroundColor: (statusInfo?.color ?? theme.muted) + '20' }]}>
-                  <Text style={{ fontSize: 14 }}>{statusInfo?.icon}</Text>
-                  <Text style={[styles.statusText, { color: statusInfo?.color }]}>{statusInfo?.label}</Text>
-                </View>
-              </View>
-              <View style={styles.routeRow}>
-                <View>
-                  <Text style={styles.branchName}>{p.origin_branch}</Text>
-                  <Text style={styles.cityName}>{p.origin_city}</Text>
-                </View>
-                <Text style={styles.arrow}>→</Text>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={styles.branchName}>{p.dest_branch}</Text>
-                  <Text style={styles.cityName}>{p.dest_city}</Text>
-                </View>
-              </View>
-              <View style={styles.cardBottom}>
-                <Text style={styles.meta}>📅 {p.created_at?.slice(0,10)}</Text>
-                <Text style={styles.meta}>🧑 To: {p.receiver_name}</Text>
-                <Text style={styles.meta}>💰 {Number(p.shipping_cost).toLocaleString()} XAF</Text>
-              </View>
-            </TouchableOpacity>
-          );
-        }}
+        renderItem={renderParcelItem}
         ListEmptyComponent={!isLoading ? (
           <View style={styles.empty}>
-            <Text style={{ fontSize: 52 }}>📦</Text>
+            <Package size={52} color={theme.muted} />
             <Text style={styles.emptyTitle}>{t('parcel.no_parcels')}</Text>
             <TouchableOpacity style={styles.sendBtn} onPress={() => router.push('/(main)/parcels/send')}>
               <LinearGradient colors={theme.gradientPrimary} style={styles.sendBtnInner}>
-                <Text style={styles.sendBtnText}>📦 Send a Parcel →</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Package size={18} color="#fff" />
+                  <Text style={styles.sendBtnText}>Send a Parcel</Text>
+                  <ArrowRight size={18} color="#fff" />
+                </View>
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -117,7 +142,6 @@ const getStyles = (theme: any) => StyleSheet.create({
   routeRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   branchName:   { fontSize: 14, fontWeight: '700', color: theme.text },
   cityName:     { fontSize: 11, color: theme.muted, marginTop: 2 },
-  arrow:        { fontSize: 18, color: theme.primary, fontWeight: '800' },
   cardBottom:   { flexDirection: 'row', gap: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.border, flexWrap: 'wrap' },
   meta:         { fontSize: 12, color: theme.textLight, fontWeight: '600' },
   empty:        { alignItems: 'center', marginTop: 80, gap: 16 },
