@@ -1,0 +1,14 @@
+.companies-page { display: flex; flex-direction: column; gap: 1.5rem; }
+.companies-hero { display: flex; align-items: center; gap: 1rem; padding: 1.5rem; }
+.companies-hero .hero-icon { color: var(--primary-color); flex-shrink: 0; }
+.companies-hero h1 { font-size: 1.4rem; font-weight: 800; }
+.companies-hero p { font-size: 0.875rem; color: var(--text-muted); }
+.co-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
+.co-card { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 1.5rem 1rem; cursor: pointer; border: none; background: transparent; text-align: center; }
+.co-logo { width: 52px; height: 52px; border-radius: 14px; object-fit: cover; background: var(--surface-dark); }
+.co-name { font-size: 0.95rem; font-weight: 700; color: var(--text-light); }
+.co-stats { display: flex; gap: 0.75rem; font-size: 0.75rem; color: var(--text-muted); }
+.co-stats span { display: flex; align-items: center; gap: 3px; }
+.co-rating { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; font-weight: 700; color: #E5BC00; }
+.co-skeleton { height: 180px; border-radius: 16px; background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }

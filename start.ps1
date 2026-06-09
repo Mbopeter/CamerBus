@@ -57,7 +57,15 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", `
 
 Start-Sleep -Seconds 2
 
-# ── 6. Start Expo (Mobile App) ──────────────────────────────
+# ── 6. Start Client Web (Vite, port 5174) ────────────────────
+Write-Host "▶  Starting Client Web on http://localhost:5174..." -ForegroundColor Yellow
+Start-Process powershell -ArgumentList "-NoExit", "-Command", `
+    "cd '$PSScriptRoot\client-web'; Write-Host 'Client Web running at http://localhost:5174' -ForegroundColor Cyan; npm run dev" `
+    -WindowStyle Normal
+
+Start-Sleep -Seconds 2
+
+# ── 7. Start Expo (Mobile App) ──────────────────────────────
 Write-Host "▶  Starting Expo (Mobile App)..." -ForegroundColor Yellow
 Start-Process powershell -ArgumentList "-NoExit", "-Command", `
     "cd '$PSScriptRoot\mobile'; Write-Host 'Expo starting...' -ForegroundColor Cyan; npx expo start --offline" `
@@ -71,6 +79,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Backend API  →  http://${ip}:8000" -ForegroundColor White
 Write-Host "  Admin Panel  →  http://localhost:5173" -ForegroundColor White
+Write-Host "  Client Web   →  http://localhost:5174" -ForegroundColor White
 Write-Host "  Mobile App   →  Scan QR in Expo window" -ForegroundColor White
 Write-Host ""
 Write-Host "  Admin Login:" -ForegroundColor Gray

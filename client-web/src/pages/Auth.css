@@ -1,0 +1,181 @@
+/* ── Auth page shell ─────────────────────────────────────────────────── */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background-image: url('/assets/login&regiterbgimg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+  position: relative;
+}
+
+.auth-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7); /* dark overlay to make text readable */
+  z-index: 0;
+}
+
+/* background blobs removed to use image instead */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-20px) scale(1.05); }
+}
+
+/* ── Auth container ──────────────────────────────────────────────────── */
+.auth-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* brand */
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+.auth-logo-img {
+  width: clamp(140px, 50%, 220px);
+  height: auto;
+  max-height: 80px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 4px 16px rgba(158, 123, 255, 0.25));
+}
+.auth-brand-tagline {
+  font-size: clamp(0.8rem, 2vw, 0.95rem);
+  color: var(--text-muted);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+/* card */
+.auth-card {
+  width: 100%;
+  padding: 2rem;
+}
+
+.auth-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+.auth-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+/* error banner */
+.auth-error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* form */
+.auth-form { display: flex; flex-direction: column; gap: 0; }
+
+/* input with icon/prefix */
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input-icon-left {
+  position: absolute;
+  left: 0.875rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.input-icon-right {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  padding: 0;
+  transition: color 0.2s;
+}
+.input-icon-right:hover { color: var(--text-light); }
+
+.input-prefix {
+  position: absolute;
+  left: 0.875rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-light);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.form-input.input-iconed { padding-left: 2.5rem; padding-right: 2.75rem; width: 100%; }
+.form-input.input-prefixed { padding-left: 6rem; width: 100%; }
+
+/* submit button */
+.auth-submit {
+  width: 100%;
+  height: 52px;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  border-radius: 12px;
+}
+
+/* divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--glass-border);
+}
+.auth-divider span { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+
+/* switch link */
+.auth-switch { text-align: center; font-size: 0.875rem; color: var(--text-muted); }
+.auth-link { color: var(--primary-color); font-weight: 700; text-decoration: none; transition: opacity 0.2s; }
+.auth-link:hover { opacity: 0.8; }
+
+/* loading dots */
+.loading-dots { display: inline-flex; gap: 4px; align-items: center; }
+.loading-dots span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: white;
+  animation: blink 1.2s infinite;
+}
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0.2; }
+  40%           { opacity: 1; }
+}

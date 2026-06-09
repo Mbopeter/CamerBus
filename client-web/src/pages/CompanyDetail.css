@@ -1,0 +1,37 @@
+.cd-page { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.cd-hero {
+  display: flex; align-items: center; gap: 1rem; padding: 1.5rem; flex-wrap: wrap;
+}
+.cd-hero-logo {
+  width: 56px; height: 56px; border-radius: 18px; flex-shrink: 0;
+  object-fit: cover;
+  background: var(--surface-dark); border: 1px solid var(--glass-border);
+}
+.cd-name { font-size: 1.3rem; font-weight: 800; }
+.cd-meta { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
+.cd-hero-skeleton { height: 100px; border-radius: 16px; background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+
+.cd-section { display: flex; flex-direction: column; gap: 1rem; }
+.cd-section-title { font-size: 1rem; font-weight: 700; }
+
+.cd-branches { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; }
+.cd-branch { display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem; }
+.branch-pin { color: var(--primary-color); flex-shrink: 0; margin-top: 2px; }
+.branch-name { font-size: 0.9rem; font-weight: 700; color: var(--text-light); }
+.branch-addr { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+.branch-city { font-size: 0.75rem; color: var(--primary-color); font-weight: 600; margin-top: 2px; }
+
+.cd-routes-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.cd-route { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; gap: 1rem; flex-wrap: wrap; }
+.cd-route-main { display: flex; flex-direction: column; gap: 0.375rem; flex: 1; }
+.cd-route-cities { display: flex; align-items: center; gap: 0.5rem; }
+.rc-city { font-size: 1rem; font-weight: 800; color: var(--text-light); }
+.rc-arrow { color: var(--primary-color); }
+.cd-route-info { display: flex; gap: 1rem; font-size: 0.8rem; color: var(--text-muted); }
+.schedule-btn { padding: 0.5rem 1.25rem; font-size: 0.85rem; border-radius: 9999px; white-space: nowrap; }
+
+.skeleton-card { border-radius: 12px; background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 2rem; text-align: center; color: var(--text-muted); }
+.empty-icon { font-size: 2.5rem; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }

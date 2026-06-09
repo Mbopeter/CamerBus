@@ -1,0 +1,48 @@
+.profile-page { display: flex; flex-direction: column; gap: 1.5rem; padding-bottom: 1rem; }
+
+.profile-hero { display: flex; align-items: center; gap: 1.25rem; padding: 1.75rem; }
+.profile-avatar {
+  width: 72px; height: 72px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white; font-size: 1.5rem; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 4px rgba(79,70,229,0.25);
+}
+.profile-name { font-size: 1.2rem; font-weight: 800; margin-bottom: 0.375rem; }
+.profile-meta { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
+.profile-role { display: inline-block; margin-top: 0.5rem; font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 9999px; background: rgba(79,70,229,0.15); color: var(--primary-color); border: 1px solid rgba(79,70,229,0.3); }
+
+/* Stats */
+.profile-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+.stat-card { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 1.25rem 0.5rem; }
+.stat-icon { font-size: 1.5rem; }
+.stat-value { font-size: 1.5rem; font-weight: 900; color: var(--text-light); }
+.stat-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+
+/* Menu */
+.profile-menu { overflow: hidden; }
+.menu-item {
+  width: 100%; display: flex; align-items: center; gap: 1rem;
+  padding: 1rem 1.25rem; border: none; background: transparent;
+  cursor: pointer; text-align: left; border-bottom: 1px solid var(--glass-border);
+  transition: background 0.15s; color: var(--text-light);
+}
+.menu-item:last-child { border-bottom: none; }
+.menu-item:hover { background: rgba(255,255,255,0.04); }
+.menu-icon { color: var(--primary-color); flex-shrink: 0; }
+.menu-text { flex: 1; }
+.menu-label { font-size: 0.9rem; font-weight: 600; }
+.menu-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 1px; }
+.menu-chevron { color: var(--text-muted); }
+
+/* Logout */
+.logout-btn {
+  display: flex; align-items: center; justify-content: center; gap: 0.625rem;
+  width: 100%; padding: 1rem; border-radius: 14px; border: none;
+  background: rgba(239,68,68,0.1); color: var(--error-color);
+  font-size: 0.95rem; font-weight: 700; cursor: pointer;
+  border: 1px solid rgba(239,68,68,0.2); transition: all 0.2s;
+}
+.logout-btn:hover { background: rgba(239,68,68,0.2); }
+
+.app-version { text-align: center; font-size: 0.75rem; color: var(--text-muted); }
