@@ -19,15 +19,8 @@ export default function PaymentMethodScreen() {
     router.push('/(main)/payment/instructions');
   };
 
-  // Only show methods available for the company
-  const company = selectedSchedule;
-  const availableMethods = PAYMENT_METHODS.filter(m => {
-    if (m.id === 'mtn_momo')      return !!company?.mtn_number;
-    if (m.id === 'orange_money')  return !!company?.orange_number;
-    if (m.id === 'bank_transfer') return !!company?.bank_account;
-    return true;
-  });
-  const methods = availableMethods.length > 0 ? availableMethods : PAYMENT_METHODS;
+  // Always show all payment methods
+  const methods = PAYMENT_METHODS;
 
   return (
     <View style={styles.container}>

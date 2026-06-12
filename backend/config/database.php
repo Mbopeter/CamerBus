@@ -28,7 +28,7 @@ class Database
                 ]);
             } catch (PDOException $e) {
                 http_response_code(500);
-                echo json_encode(['success' => false, 'message' => 'Database connection failed']);
+                echo json_encode(['success' => false, 'message' => 'Database connection failed: ' . $e->getMessage()]);
                 exit;
             }
         }
@@ -37,9 +37,22 @@ class Database
 
     public static function query(string $sql, array $params = []): PDOStatement
     {
-        $stmt = self::getInstance()->prepare($sql);
-        $stmt->execute($params);
-        return $stmt;
+        try {
+            $stmt = self::getInstance()->prepare($sql);
+            $stmt->execute($params);
+            return $stmt;
+        } catch (PDOException $e) {
+            $msg = $e->getMessage();
+            // 2006: MySQL server has gone away
+            // 2013: Lost connection to MySQL server during query
+            if (strpos($msg, '2006') !== false || strpos($msg, '2013') !== false) {
+                self::$instance = null; // Reset connection
+                $stmt = self::getInstance()->prepare($sql);
+                $stmt->execute($params);
+                return $stmt;
+            }
+            throw $e;
+        }
     }
 
     public static function lastInsertId(): string
@@ -47,7 +60,20 @@ class Database
         return self::getInstance()->lastInsertId();
     }
 
-    public static function beginTransaction(): void { self::getInstance()->beginTransaction(); }
+    public static function beginTransaction(): void
+    {
+        try {
+            self::getInstance()->beginTransaction();
+        } catch (PDOException $e) {
+            $msg = $e->getMessage();
+            if (strpos($msg, '2006') !== false || strpos($msg, '2013') !== false) {
+                self::$instance = null;
+                self::getInstance()->beginTransaction();
+            } else {
+                throw $e;
+            }
+        }
+    }
     public static function commit(): void           { self::getInstance()->commit(); }
     public static function rollback(): void         { self::getInstance()->rollBack(); }
 }

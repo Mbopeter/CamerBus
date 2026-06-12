@@ -16,7 +16,7 @@ export default function BookingSummary() {
   const total = selectedSeats.length * pricePerSeat;
 
   const [step, setStep] = useState<'summary' | 'payment' | 'success'>('summary');
-  const [method, setMethod] = useState<'momo' | 'orange'>('momo');
+  const [method, setMethod] = useState<'momo' | 'orange' | 'bank'>('momo');
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [bookingRef, setBookingRef] = useState('');
   const [_paymentId, setPaymentId] = useState<number | null>(null);
@@ -92,10 +92,10 @@ export default function BookingSummary() {
         <div className="payment-amount">Total: <strong>{total.toLocaleString()} XAF</strong></div>
 
         <div className="payment-methods">
-          {(['momo', 'orange'] as const).map(m => (
+          {(['momo', 'orange', 'bank'] as const).map(m => (
             <button key={m} id={`method-${m}`} className={`method-btn ${method === m ? 'active' : ''}`} onClick={() => setMethod(m)}>
-              <span className="method-icon">{m === 'momo' ? '📱' : '🍊'}</span>
-              <span>{m === 'momo' ? 'MTN Mobile Money' : 'Orange Money'}</span>
+              <span className="method-icon">{m === 'momo' ? '📱' : m === 'orange' ? '🍊' : '🏦'}</span>
+              <span>{m === 'momo' ? 'MTN Mobile Money' : m === 'orange' ? 'Orange Money' : 'Bank Payment'}</span>
             </button>
           ))}
         </div>
@@ -108,11 +108,17 @@ export default function BookingSummary() {
               <li>Send <strong>{total.toLocaleString()} XAF</strong></li>
               <li>Take a screenshot and upload below</li>
             </ol>
-          ) : (
+          ) : method === 'orange' ? (
             <ol>
               <li>Dial <strong>#150*60#</strong> on your Orange line</li>
               <li>Send <strong>{total.toLocaleString()} XAF</strong></li>
               <li>Take a screenshot and upload below</li>
+            </ol>
+          ) : (
+            <ol>
+              <li>Transfer <strong>{total.toLocaleString()} XAF</strong> to the designated bank account</li>
+              <li>Account Name: <strong>CamerBus</strong></li>
+              <li>Take a screenshot of the receipt and upload below</li>
             </ol>
           )}
         </div>
